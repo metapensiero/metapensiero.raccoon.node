@@ -14,7 +14,7 @@ class NodeContext:
     instances.
     """
 
-    def __init__(self, loop=None):
+    def __init__(self, loop=None, path_resolvers=None):
         self._parent_context = None
         self.loop = loop or asyncio.get_event_loop()
 
@@ -38,11 +38,12 @@ class NodeContext:
 class WAMPNodeContext(NodeContext):
     """A Node context with WAMP management details."""
 
-    def __init__(self, loop=None, wamp_session=None, wamp_details=None,
-                 publication_wrapper=None, subscription_wrapper=None,
-                 call_wrapper=None, call_registration_options=None,
+    def __init__(self, loop=None, path_resolvers=None, wamp_session=None,
+                 wamp_details=None, publication_wrapper=None,
+                 subscription_wrapper=None, call_wrapper=None,
+                 call_registration_options=None,
                  subscription_registration_options=None):
-        super().__init__(loop=loop)
+        super().__init__(loop=loop, path_resolvers=path_resolvers)
         self.wamp_session = wamp_session
         self.wamp_details = wamp_details
         self.publication_wrapper = publication_wrapper
