@@ -155,7 +155,6 @@ class NodeWAMPManager:
                         NODE_INTERNAL_SIGNALS}
         path = node.node_path
         logger.debug("Beginning registration of: %s", node)
-        trans = transaction.get(None)
         # deal with calls first
         if len(calls_data) > 0:
             try:
@@ -167,10 +166,8 @@ class NodeWAMPManager:
                 await self.reg_store.add_call(node, context, *call_endpoints)
             except WAMPApplicationError:
                 logger.exception("Error while registering procedures")
-                res = node.on_node_registration_failure.notify(node=node,
+                await node.on_node_registration_failure.notify(node=node,
                                                                context=context)
-                if trans:
-                    trans.add(res)
                 raise
 
         # deal with signals
@@ -187,10 +184,8 @@ class NodeWAMPManager:
                     iproxy.wamp_point = points[ix]
             except WAMPApplicationError:
                 logger.exception("Error while registering signals")
-                res = node.on_node_registration_failure.notify(node=node,
+                await node.on_node_registration_failure.notify(node=node,
                                                                context=context)
-                if trans:
-                    trans.add(res)
                 raise
 
         # deal with subscritptions
@@ -202,16 +197,12 @@ class NodeWAMPManager:
                 await self.reg_store.add_subscription(node, context, *sub_endpoints)
             except WAMPApplicationError:
                 logger.exception("Error while registering subscriptions")
-                res = node.on_node_registration_failure.notify(node=node,
+                await node.on_node_registration_failure.notify(node=node,
                                                                context=context)
-                if trans:
-                    trans.add(res)
                 raise
         node.node_registered = True
-        res = node.on_node_registration_success.notify(node=node,
-                                                       context=context)
-        if trans:
-            trans.add(res)
+        await node.on_node_registration_success.notify(node=node,
+                                                             context=context)
         logger.debug("Completed registration of: %s", node)
 
     async def _on_node_unregister(self, node, context):
