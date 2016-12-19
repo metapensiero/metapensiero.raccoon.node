@@ -8,6 +8,8 @@
 
 import asyncio
 
+undefined = object
+
 
 class NodeContext:
     """The run context of a tree of :py:class:`raccoon.rocky.node.Node`
@@ -17,6 +19,28 @@ class NodeContext:
     def __init__(self, loop=None, path_resolvers=None):
         self._parent_context = None
         self.loop = loop or asyncio.get_event_loop()
+        self.path_resolvers = path_resolvers or []
+
+    def __contains__(self, item):
+        return getattr(self, item, undefined) is not undefined
+
+    def __getattr__(self, name):
+        if self._parent_context:
+            return getattr(self._parent_context, name)
+        else:
+            raise AttributeError
+
+    def __iter__(self):
+        return iter(self.keys())
+
+    def get(self, name, default=None):
+        return getattr(self, name, default)
+
+    def keys(self):
+        keys = self.__dict__.keys() - {'_parent_context'}
+        if self._parent_context:
+            keys |= self._parent_context.keys()
+        return keys
 
     def new(self, **kwargs):
         """Poor man's prototype inheritation. This returns a new instance of
@@ -28,11 +52,8 @@ class NodeContext:
             setattr(nc, k, v)
         return nc
 
-    def __getattr__(self, name):
-        if self._parent_context:
-            return getattr(self._parent_context, name)
-        else:
-            raise AttributeError
+    def set(self, name, value):
+        setattr(self, name, value)
 
 
 class WAMPNodeContext(NodeContext):
