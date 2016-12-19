@@ -8,6 +8,7 @@
 
 from abc import ABCMeta, abstractmethod
 import asyncio
+import inspect
 import logging
 
 from autobahn.wamp.types import SubscribeOptions, RegisterOptions
@@ -230,8 +231,22 @@ class NodeWAMPManager:
         self._com_guard(node)
         if isinstance(path, str):
             path = node.node_path.resolve(path, node.node_context)
-        return node.node_context.wamp_session.call(
-            str(path), *args, **kwargs)
+        str_path = str(path)
+        session = node.node_context.wamp_session
+        item = self.reg_store.get(str_path)
+        if len(item) > 0 and session in item.regs:
+            details = {'procedure': str_path, 'caller': 'local'}
+            result = self._dispatch_procedure(session, str_path, *args,
+                                              details=details, **kwargs)
+        else:
+            result = node.node_context.wamp_session.call(
+                str_path, *args, **kwargs)
+        if not inspect.isawaitable(result):
+            fut = asyncio.Future(loop=node.loop)
+            fut.set_result(result)
+            result = fut
+        return result
+
 
     def clear(self):
         self.reg_store.clear()
