@@ -229,7 +229,7 @@ class NodeWAMPManager:
         """
         self._com_guard(node)
         if isinstance(path, str):
-            path = node.node_path.resolve(path)
+            path = node.node_path.resolve(path, node.node_context)
         return node.node_context.wamp_session.call(
             str(path), *args, **kwargs)
 
@@ -240,7 +240,7 @@ class NodeWAMPManager:
         """Emulate signal api to connect an handler to a subscription."""
         self._com_guard(node)
         if isinstance(path, str):
-            path = node.node_path.resolve(path)
+            path = node.node_path.resolve(path, node.node_context)
         try:
             await self.reg_store.add_subscription(node, node.node_context,
                                                   (str(path), handler, False))
@@ -253,9 +253,10 @@ class NodeWAMPManager:
         """Emulate signal api to connect an handler to a subscription."""
         self._com_guard(node)
         if isinstance(path, str):
-            path = node.node_path.resolve(path)
+            path = node.node_path.resolve(path, node.node_context)
         try:
-            await self.reg_store.remove(node, node.node_context, str(path), handler)
+            await self.reg_store.remove(node, node.node_context, str(path),
+                                        handler)
         except WAMPApplicationError:
             logger.exception("Error while unregistering a subscription to '%s'",
                              path)
@@ -273,7 +274,8 @@ class NodeWAMPManager:
         """
         self._com_guard(src_point.node)
         if isinstance(path, str):
-            path = src_point.node.node_path.resolve(path)
+            path = src_point.node.node_path.resolve(path,
+                                                    src_point.node.node_context)
         str_path = str(path)
         item = self.reg_store.get(str_path)
         session = src_point.node.node_context.wamp_session

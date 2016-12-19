@@ -21,7 +21,7 @@ class Proxy:
         if isinstance(path, Path):
             self.__path = path
         else:
-            self.__path = node.node_path.resolve(path)
+            self.__path = node.node_path.resolve(path, node.node_context)
         self.__name = self.__path[-1]
 
     def __str__(self):
