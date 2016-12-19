@@ -25,10 +25,15 @@ class NodeContext:
         return getattr(self, item, undefined) is not undefined
 
     def __getattr__(self, name):
-        if self._parent_context:
-            return getattr(self._parent_context, name)
+        ctx = self._parent_context
+        while ctx:
+            value = ctx.__dict__.get(name, undefined)
+            if value is not undefined:
+                break
+            ctx = ctx._parent_context
         else:
             raise AttributeError
+        return value
 
     def __iter__(self):
         return iter(self.keys())
