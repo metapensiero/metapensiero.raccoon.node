@@ -7,10 +7,11 @@
 #
 
 from collections import abc
+import re
 from weakref import WeakValueDictionary
 
 PATHSEP = '.'
-
+INVALID_URI_CHARS = re.compile('[^a-z0-9._*]', flags=re.ASCII)
 
 def norm_path(value):
     if isinstance(value, Path):
@@ -111,7 +112,7 @@ class Path(metaclass=PathMeta):
     def __getitem__(self, index):
         return self.path[index]
 
-    def resolve(self, path):
+    def resolve(self, path, context=None):
         """Resolve a potentially relative path into an absolute path.
 
         :param value: either a *dotted* string or a sequence of path fragments
@@ -123,15 +124,33 @@ class Path(metaclass=PathMeta):
 
         """
         if isinstance(path, Path):
-            raise PathError("Cannot be a path")
+            raise PathError("The path to resolve cannot be a Path instance")
         path = list(norm_path(path))
+        out_path = None
         if path[0].startswith('@'):
-            assert self.base is not None
+            if not self.base:
+                raise PathError("Cannot do base resolution if the path "
+                                "hasn't one.")
             path[0] = path[0][1:]
             if not path[0]:
                 path.pop(0)
-            path = self.base.path + tuple(path)
-        return type(self)(path)
+            out_path = self.base.path + tuple(path)
+        if not out_path and context:
+            path_resolvers = context.get('path_resolvers')
+            if path_resolvers:
+                path = tuple(path)
+                for resolver in path_resolvers:
+                    out_path = resolver(self, path, context)
+                    if out_path:
+                        break
+        if out_path:
+            res = type(self)(out_path)
+        elif not out_path and INVALID_URI_CHARS.search(PATHSEP.join(path)):
+            raise PathError("Failed resolution of path '%s'" % \
+                            PATHSEP.join(path))
+        else:
+            res = type(self)(path)
+        return res
 
     def __str__(self):
         return PATHSEP.join(self.path)
