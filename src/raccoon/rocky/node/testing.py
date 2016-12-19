@@ -15,6 +15,7 @@ from autobahn.wamp.types import CallDetails, EventDetails
 from raccoon.rocky.node import context
 from raccoon.rocky.node.wamp import node_wamp_manager
 
+
 class FakeRegistration:
 
     def __init__(self, session, procedure, delfunc):
@@ -125,7 +126,6 @@ def create_fake_session(global_registry, event_loop):
                 if asyncio.iscoroutine(result):
                     asyncio.ensure_future(result, loop=event_loop)
 
-
     fake_session = mock.NonCallableMock()
     fake_session.call.side_effect = call
     fake_session.register.side_effect = register
@@ -183,16 +183,14 @@ def wamp_session2(request, event_loop, global_registry):
 def wamp_context(wamp_session, event_loop):
     return context.WAMPNodeContext(
         event_loop,
-        wamp_session,
-        None
+        wamp_session=wamp_session
     )
 
 @pytest.fixture(scope='function')
 def wamp_context2(wamp_session2, event_loop):
     return context.WAMPNodeContext(
         event_loop,
-        wamp_session2,
-        None
+        wamp_session=wamp_session2
     )
 
 
