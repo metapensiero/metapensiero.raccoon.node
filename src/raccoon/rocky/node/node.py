@@ -50,8 +50,14 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     """
 
     def _node_on_parent_unbind(self, **_):
-        name = self.node_path.path[-1]
-        delattr(self.node_parent, name)
+        self.node_parent.on_node_unbind.disconnect(self._node_on_parent_unbind)
+        self.node_unbind()
+
+    def _node_remove_child(self, child):
+        for k, v in self.__dict__.items():
+            if v is child:
+                break
+        del self.__dict__[k]
 
     def __delattr__(self, name):
         """Deleting an attribute which has a node as value automatically will
@@ -73,6 +79,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
             path = self.node_path + name
             value.node_bind(path, self.node_context, parent=self)
             self.on_node_add.notify(path=path, node=value)
+            value.on_node_unbind.connect(self.node_child_on_unbind)
         super().__setattr__(name, value)
 
     def __str__(self):
@@ -119,6 +126,13 @@ class Node(metaclass=SignalAndHandlerInitMeta):
                                  path=self.node_path,
                                  parent=self.node_parent)
 
+    def node_child_on_unbind(self, node, path, parent):
+        """Called when a child node unbind itself, by default it will remove the
+        attribute reference on it.
+        """
+        self._node_remove_child(node)
+        node.on_node_unbind.disconnect(self.node_child_on_unbind)
+
     @property
     def node_name(self):
         """Returns the name of this node, the last part of its path."""
@@ -134,9 +148,11 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         self.on_node_unbind.notify(node=self,
                                    path=self.node_path,
                                    parent=self.node_parent)
-        del self.node_context
         del self.node_path
-        del self.node_parent
+        if self.node_context:
+            del self.node_context
+        if self.node_parent:
+            del self.node_parent
 
 
 class WAMPNode(Node, metaclass=WAMPInitMeta):

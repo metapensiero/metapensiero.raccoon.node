@@ -326,3 +326,30 @@ async def test_proxy_handler_two_sessions(wamp_context,  wamp_context2,
 
     await events.wait(timeout=2)
     assert counter == 2
+
+
+def test_node_unbind():
+
+    nodes = []
+    parent = Node()
+    parent.node_bind('root')
+    nodes.append(parent)
+
+    counter = 0
+    def on_unbind(**_):
+        nonlocal counter
+        counter += 1
+
+    for i in range(2, 5):
+        p = nodes[-1]
+        for y in range(i):
+            n = Node()
+            n.on_node_unbind.connect(on_unbind)
+            name = 'n' + str(i) + str(y)
+            setattr(p, name, n)
+            nodes.append(n)
+
+    assert hasattr(parent, 'n20')
+    parent.node_unbind()
+    assert counter == 2 + 3 + 4
+    assert not hasattr(parent, 'n20')
