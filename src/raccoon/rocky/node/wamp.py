@@ -80,6 +80,15 @@ class NodeWAMPManager:
                 node.node_context.wamp_session.is_attached()):
             raise RPCError('WAMP session is not initialized properly')
 
+    def _pull_errors(self, uri, future):
+        """Get the value of an awaitable result returned by dispatch, just to make
+        visible possible errors."""
+        try:
+            future.result()
+        except:
+            logger.exception("Error while dispatching for '%s'", uri)
+            raise
+
     def _dispatch(self, uri, func, wrapper, args, kwargs):
         """Do the real dispatch."""
         if not callable(func):
@@ -87,7 +96,15 @@ class NodeWAMPManager:
         if callable(wrapper):
             result = wrapper(uri, func, args, kwargs)
         else:
-            result = func(*args, **kwargs)
+            try:
+                result = func(*args, **kwargs)
+                if inspect.isawaitable(result):
+                    result = asyncio.ensure_future(result)
+                    result.add_done_callback(functools.partial(self._pull_errors,
+                                                               uri))
+            except:
+                logger.exception("Error while dispatching for '%s'", uri)
+                raise
         return result
 
     def _dispatch_event(self, src_session, src_point, uri, *args, **kwargs):
