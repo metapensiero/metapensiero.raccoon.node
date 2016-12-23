@@ -225,7 +225,7 @@ class NodeWAMPManager:
         logger.debug("Completed registration of: %s", node)
 
     async def _on_node_unregister(self, node, context):
-        """Unegisters event handlers and calls from :term:`WAMP`."""
+        """Unregisters event handlers and calls from :term:`WAMP`."""
         assert context.wamp_session.is_attached()
         logger.debug("Beginning unregistration of: %s", node)
         try:
