@@ -6,6 +6,8 @@
 # :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
 #
 
+import asyncio
+import inspect
 import logging
 
 from metapensiero.signal import (Signal, SignalAndHandlerInitMeta)
@@ -226,16 +228,25 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
 
     def node_unbind(self):
         """Specialized to call :meth:`.node_unregister`."""
-        self.node_unregister()
-        super().node_unbind()
-        del self.node_registered
+        def when_unregistered(future=None):
+            super(WAMPNode, self).node_unbind()
+            del self.node_registered
+        maybe_future = self.node_unregister()
+        if inspect.isawaitable(maybe_future):
+            maybe_future = asyncio.ensure_future(maybe_future, loop = self.loop)
+            maybe_future.add_done_callback(when_unregistered)
+        else:
+            when_unregistered()
 
     def node_unregister(self):
         """Unregisters the node from the :term:`WAMP` session. It emits the
         ``on_node_unregister`` event."""
         if self.node_registered:
-            self.on_node_unregister.notify(node=self,
-                                           context=self.node_context)
+            res = self.on_node_unregister.notify(node=self,
+                                                 context=self.node_context)
+        else:
+            res = None
+        return res
 
     def remote(self, path):
         return Proxy(self, path)
