@@ -193,7 +193,7 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
         self.node_register()
 
     def call(self, path, *args, **kwargs):
-        """Call a another rpc endpoint published via :term:`WAMP`.
+        """Call another rpc endpoint published via :term:`WAMP`.
 
         .. important::
           The ``disclose_me=True`` option (was the default in old
