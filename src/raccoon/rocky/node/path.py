@@ -13,6 +13,7 @@ from weakref import WeakValueDictionary
 PATHSEP = '.'
 INVALID_URI_CHARS = re.compile('[^a-z0-9._*]', flags=re.ASCII)
 
+
 def norm_path(value):
     if isinstance(value, Path):
         value = value._path
@@ -50,6 +51,7 @@ class PathMeta(type):
             result = exists
         else:
             result = super().__call__(path, base)
+            reg[(path, base)] = result
         return result
 
 
