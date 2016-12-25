@@ -10,6 +10,7 @@ import asyncio
 import inspect
 import logging
 
+from metapensiero.asyncio import transaction
 from metapensiero.signal import (Signal, SignalAndHandlerInitMeta)
 
 from .context import NodeContext
@@ -68,9 +69,12 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         It fires the ``on_node_add`` event.
         """
         if isinstance(value, Node) and name != 'node_parent':
+            trans = transaction.get(None)
             path = self.node_path + name
             value.node_bind(path, self.node_context, parent=self)
-            self.on_node_add.notify(path=path, node=value)
+            res = self.on_node_add.notify(path=path, node=value)
+            if trans:
+                trans.add(res)
             value.on_node_unbind.connect(self.node_child_on_unbind)
         super().__setattr__(name, value)
 
@@ -116,6 +120,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
           :class:`~raccoon.rocky.node.context.NodeContext`
         :type parent: an instance of :class:`~.Node`
         """
+        trans = transaction.get(None)
         assert len(path) > 0
         if context and isinstance(context, NodeContext):
             if not self.node_context:
@@ -124,9 +129,11 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         self.node_parent = parent
         if parent and isinstance(parent, Node):
             parent.on_node_unbind.connect(self._node_on_parent_unbind)
-        self.on_node_bind.notify(node=self,
-                                 path=self.node_path,
-                                 parent=self.node_parent)
+        res = self.on_node_bind.notify(node=self,
+                                       path=self.node_path,
+                                       parent=self.node_parent)
+        if trans:
+            trans.add(res)
 
     def node_child_on_unbind(self, node, path, parent):
         """Called when a child node unbind itself, by default it will remove the
@@ -147,9 +154,12 @@ class Node(metaclass=SignalAndHandlerInitMeta):
 
     def node_unbind(self):
         """Unbinds a node from a path. It emits ``on_node_unbind`` event."""
-        self.on_node_unbind.notify(node=self,
-                                   path=self.node_path,
-                                   parent=self.node_parent)
+        trans = transaction.get(None)
+        res = self.on_node_unbind.notify(node=self,
+                                         path=self.node_path,
+                                         parent=self.node_parent)
+        if trans:
+            trans.add(res)
         del self.node_path
         if self.node_context:
             del self.node_context
@@ -220,20 +230,27 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
     def node_register(self):
         """Register this node to the :term:`WAMP` session. It emits the
         ``on_node_register`` event."""
+        trans = transaction.get(None)
         if not self.node_registered and self.node_context and \
            self.node_context.wamp_session and \
            self.node_context.wamp_session.is_attached():
-            self.on_node_register.notify(node=self,
-                                         context=self.node_context)
+            res = self.on_node_register.notify(node=self,
+                                               context=self.node_context)
+            if trans:
+                trans.add(res)
 
     def node_unbind(self):
         """Specialized to call :meth:`.node_unregister`."""
+        trans = transaction.get(None)
         def when_unregistered(future=None):
             super(WAMPNode, self).node_unbind()
-            del self.node_registered
+            if self.node_registered:
+                del self.node_registered
         maybe_future = self.node_unregister()
         if inspect.isawaitable(maybe_future):
             maybe_future = asyncio.ensure_future(maybe_future, loop = self.loop)
+            if trans:
+                trans.add(maybe_future)
             maybe_future.add_done_callback(when_unregistered)
         else:
             when_unregistered()
@@ -241,9 +258,12 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
     def node_unregister(self):
         """Unregisters the node from the :term:`WAMP` session. It emits the
         ``on_node_unregister`` event."""
+        trans = transaction.get(None)
         if self.node_registered:
             res = self.on_node_unregister.notify(node=self,
                                                  context=self.node_context)
+            if trans:
+                trans.add(res)
         else:
             res = None
         return res
