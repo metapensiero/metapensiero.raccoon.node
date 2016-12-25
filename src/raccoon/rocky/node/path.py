@@ -72,6 +72,10 @@ class Path(metaclass=PathMeta):
         self.base = base
 
     @property
+    def absolute(self):
+        return type(self)(self.path)
+
+    @property
     def path(self):
         """The absolute path, maybe the composition of the base path with the
         'local' one."""
