@@ -51,16 +51,6 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     functionality.
     """
 
-    def _node_on_parent_unbind(self, **_):
-        self.node_parent.on_node_unbind.disconnect(self._node_on_parent_unbind)
-        self.node_unbind()
-
-    def _node_remove_child(self, child):
-        for k, v in self.__dict__.items():
-            if v is child:
-                break
-        del self.__dict__[k]
-
     def __delattr__(self, name):
         """Deleting an attribute which has a node as value automatically will
         call :meth:`node_unbind` on it."""
@@ -87,6 +77,16 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     def __str__(self):
         return "%s instance at '%s''" % (self.__class__.__name__,
                                          self.node_path)
+
+    def _node_on_parent_unbind(self, **_):
+        self.node_parent.on_node_unbind.disconnect(self._node_on_parent_unbind)
+        self.node_unbind()
+
+    def _node_remove_child(self, child):
+        for k, v in self.__dict__.items():
+            if v is child:
+                break
+        del self.__dict__[k]
 
     @property
     def loop(self):
