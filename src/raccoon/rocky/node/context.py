@@ -57,6 +57,12 @@ class NodeContext:
             setattr(nc, k, v)
         return nc
 
+    def chain(self, other):
+        if not self._parent_context:
+            self._parent_context = other
+        else:
+            raise ValueError("Already chained")
+
     def set(self, name, value):
         setattr(self, name, value)
 
