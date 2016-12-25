@@ -118,6 +118,10 @@ class Path(metaclass=PathMeta):
     def __getitem__(self, index):
         return self.path[index]
 
+    def __hash__(self):
+        return hash((self._path,
+                     self.base if self.base is not self else None))
+
     def resolve(self, path, context=None):
         """Resolve a potentially relative path into an absolute path.
 
