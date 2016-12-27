@@ -124,7 +124,7 @@ class NodeWAMPManager:
                 continue
             wrapper = point.node.node_context.subscription_wrapper
             kw = kwargs.copy()
-            if point.is_source: # it is the signal
+            if point.is_source:  # it is the signal
                 kw.pop('details', None)
                 logger.debug("Dispatching a WAMP event to '%s', args: '%s', kw:"
                              " '%s'", uri, args, kw)
