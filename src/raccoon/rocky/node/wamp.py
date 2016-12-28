@@ -62,7 +62,7 @@ class AbstractWAMPNode(metaclass=ABCMeta):
 
 
 class NodeWAMPManager:
-    """Hooks up int ``metapensiero.signal`` machinery and registers itself
+    """Hooks up into ``metapensiero.signal`` machinery and registers itself
     to handle :term:`WAMP` setup.
     """
 
@@ -236,7 +236,7 @@ class NodeWAMPManager:
         logger.debug("Completed unregistration of: %s", node)
 
     def call(self, node, path, *args, **kwargs):
-        """Call a another rpc endpoint published via :term:`WAMP`.
+        """Call another rpc endpoint published via :term:`WAMP`.
 
         .. important::
           The ``disclose_me=True`` option (was the default in old
@@ -299,9 +299,9 @@ class NodeWAMPManager:
         return RPCPoint(node, func)
 
     def notify(self, src_point, path, *args, **kwargs):
-        """Execute a notification on the signal at 'path'. This takes care of
+        """Execute a notification on the signal at `path`. This takes care of
         executing local dispatching for the sessions controlled by this
-        manager, if any. ``src_point`` can be an instance of EndpointDef to
+        manager, if any. `src_point` can be an instance of EndpointDef to
         exclude from the notification. This is only used by ``publish_signal``
         later on to avoid circular signalling.
         """
