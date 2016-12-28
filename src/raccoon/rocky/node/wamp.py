@@ -260,7 +260,7 @@ class NodeWAMPManager:
             result = node.node_context.wamp_session.call(
                 str_path, *args, **kwargs)
         if not inspect.isawaitable(result):
-            fut = asyncio.Future(loop=node.loop)
+            fut = node.loop.create_future()
             fut.set_result(result)
             result = fut
         return result
