@@ -6,13 +6,12 @@
 # :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
 #
 
-import asyncio
 from functools import partial
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from autobahn.wamp.request import Subscription, Registration
 from autobahn.wamp.types import (SubscribeOptions, RegisterOptions)
-from metapensiero.asyncio import transaction
+from . import utils
 
 
 class RPCPointMeta(type):
@@ -172,7 +171,6 @@ class RegistrationStore:
         coros = []
         results = []
         reg_items = []
-        trans = transaction.get(None)
         for uri, func in uri_funcs:
             reg_item = self.get(uri)
             point = reg_item.add_point(node, func, is_source=True)
@@ -185,10 +183,8 @@ class RegistrationStore:
                 options=opts
             )
             coros.append(coro)
-        call_gathering = asyncio.gather(*coros,
-                                        loop=context.loop)
-        if trans:
-            trans.add(call_gathering)
+        call_gathering = utils.gather(*coros,
+                                      loop=context.loop)
         regs = await call_gathering
         for ix, reg in enumerate(regs):
             reg_item = reg_items[ix]
@@ -233,11 +229,8 @@ class RegistrationStore:
                     coros.append(coro)
 
         if coros:
-            trans = transaction.get(None)
-            call_gathering = asyncio.gather(*coros,
-                                            loop=context.loop)
-            if trans:
-                trans.add(call_gathering)
+            call_gathering = utils.gather(*coros,
+                                          loop=context.loop)
             regs = await call_gathering
             for iy, reg in enumerate(regs):
                 reg_item = really_reg[iy]
@@ -263,7 +256,6 @@ class RegistrationStore:
     async def remove(self, node, context, uri=None, func=None):
         if uri is None:
             assert func is None
-        trans = transaction.get(None)
         unregs = set()
         session = context.wamp_session
         if uri:
@@ -283,7 +275,5 @@ class RegistrationStore:
                     self.expunge(item)
         if unregs:
             coros = set(item.unregister(session) for item in unregs)
-            gathering = asyncio.gather(*coros, loop=context.loop)
-            if trans:
-                trans.add(gathering)
+            gathering = utils.gather(*coros, loop=context.loop)
             await gathering

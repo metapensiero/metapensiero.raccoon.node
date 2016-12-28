@@ -14,11 +14,11 @@ import logging
 
 from autobahn.wamp.types import SubscribeOptions, RegisterOptions
 from autobahn.wamp.exception import ApplicationError as WAMPApplicationError
-from metapensiero.asyncio import transaction
 from metapensiero.signal import (ExternalSignallerAndHandler,
                                  SignalAndHandlerInitMeta)
 
 from .registrations import RegistrationStore, RPCPoint
+from . import utils
 
 
 NODE_INTERNAL_SIGNALS = (
@@ -330,13 +330,7 @@ class NodeWAMPManager:
             if asyncio.iscoroutine(res):
                 coros.append(res)
         if coros:
-            trans = transaction.get(None)
-            if trans:
-                trans.add(*coros)
-            if len(coros) > 1:
-                res = asyncio.gather(*coros, loop=src_point.node.node_context.loop)
-            else:
-                res = coros[0]
+            res = utils.gather(*coros, loop=src_point.node.node_context.loop)
         else:
             res = None
         return res
