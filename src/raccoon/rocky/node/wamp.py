@@ -265,7 +265,6 @@ class NodeWAMPManager:
             result = fut
         return result
 
-
     def clear(self):
         self.reg_store.clear()
 
