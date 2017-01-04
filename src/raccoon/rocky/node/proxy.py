@@ -7,6 +7,7 @@
 
 from .path import Path
 
+
 class ProxyError(Exception):
     pass
 
@@ -35,18 +36,18 @@ class Proxy:
     def __call__(self, *args, **kwargs):
         if not self.__name:
             raise ProxyError("No call function or no path")
-        return self.__node.__class__.manager.call(self.__node, self.__path,
-                                                  *args, **kwargs)
+        manager = self.__node.__class__.manager
+        return manager.call(self.__node, self.__path, *args, **kwargs)
 
     def connect(self, handler):
-        return self.__node.__class__.manager.connect(self.__node, self.__path,
-                                                     handler)
+        manager = self.__node.__class__.manager
+        return manager.connect(self.__node, self.__path, handler)
 
     def disconnect(self, handler):
-        return self.__node.__class__.manager.disconnect(self.__node, self.__path,
-                                                        handler)
+        manager = self.__node.__class__.manager
+        return manager.disconnect(self.__node, self.__path, handler)
 
     def notify(self, *args, **kwargs):
         manager = self.__node.__class__.manager
-        return self.__node.__class__.manager.notify(manager.get_point(self.__node),
-                                                    self.__path, *args, **kwargs)
+        return manager.notify(manager.get_point(self.__node), self.__path,
+                              *args, **kwargs)
