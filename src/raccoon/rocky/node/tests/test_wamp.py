@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Project:  raccoon.rocky.node -- wamp stuff tests
-# :Created:  mar 22 mar 2016 19:12:45 CET
-# :Author:   Alberto Berti <alberto@metapensiero.it>
-# :License:  GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Project:   raccoon.rocky.node -- wamp stuff tests
+# :Created:   mar 22 mar 2016 19:12:45 CET
+# :Author:    Alberto Berti <alberto@metapensiero.it>
+# :License:   GNU General Public License version 3 or later
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 import pytest

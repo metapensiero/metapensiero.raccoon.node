@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Progetto:  raccoon.rocky.node -- proxy object
-# :Creato:    ven 25 nov 2016 14:05:52 CET
-# :Autore:    Alberto Berti <alberto@metapensiero.it>
-# :Licenza:   GNU General Public License version 3 or later
+# :Project:   raccoon.rocky.node -- proxy object
+# :Created:   ven 25 nov 2016 14:05:52 CET
+# :Author:    Alberto Berti <alberto@metapensiero.it>
+# :License:   GNU General Public License version 3 or later
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 from .path import Path

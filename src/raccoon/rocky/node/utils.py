@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Project:  raccoon.rocky.node -- utilities
-# :Created:    mer 28 dic 2016 11:59:15 CET
+# :Project:   raccoon.rocky.node -- utilities
+# :Created:   mer 28 dic 2016 11:59:15 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 import asyncio

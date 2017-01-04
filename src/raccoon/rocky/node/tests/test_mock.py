@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Progetto:  raccoon.rocky.node -- test mock objects
-# :Creato:    lun 19 ott 2015 19:35:42 CEST
-# :Autore:    Alberto Berti <alberto@metapensiero.it>
-# :Licenza:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Project:   raccoon.rocky.node -- test mock objects
+# :Created:   lun 19 ott 2015 19:35:42 CEST
+# :Author:    Alberto Berti <alberto@metapensiero.it>
+# :License:   GNU General Public License version 3 or later
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 import pytest
