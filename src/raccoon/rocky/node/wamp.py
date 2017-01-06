@@ -155,6 +155,9 @@ class NodeWAMPManager:
         """It's an handler registered at class registration time. It works on a single
         node and registers marked event handlers and procedures with
         :term:`WAMP`.
+
+        This is the second step of the registration of a node object and
+        happens on every instance.
         """
         path = str(node.node_path)
         session = context.wamp_session
@@ -233,7 +236,7 @@ class NodeWAMPManager:
                 raise
         node.node_registered = True
         await node.on_node_registration_success.notify(node=node,
-                                                             context=context)
+                                                       context=context)
         logger.debug("Completed registration of: %s", node)
 
     async def _on_node_unregister(self, node, context):
