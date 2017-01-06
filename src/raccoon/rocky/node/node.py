@@ -187,16 +187,24 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
     """
 
     on_node_register = Signal()
-    "Signal emitted when node_register() is called."
+    """Signal emitted when node_register() is called. Its events have two
+    keywords, ``node`` and ``context``.
+    """
 
     on_node_registration_failure = Signal()
-    "Signal emitted when registration fails"
+    """Signal emitted when registration fails. Its events have two keywords,
+    ``node`` and ``context``.
+    """
 
     on_node_registration_success = Signal()
-    "Signal emitted when the registration is complete"
+    """Signal emitted when the registration is complete. Its events have two
+    keywords, ``node`` and ``context``.
+    """
 
     on_node_unregister = Signal()
-    "Signal emitted when node_unregister() is called."
+    """Signal emitted when node_unregister() is called. Its events have two
+    keywords, ``node`` and ``context``.
+    """
 
     def _node_on_parent_register(self, node, context):
         if not self.node_context:
