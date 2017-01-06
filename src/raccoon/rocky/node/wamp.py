@@ -344,7 +344,8 @@ class NodeWAMPManager:
         if coros:
             res = utils.gather(*coros, loop=src_point.node.node_context.loop)
         else:
-            res = None
+            res = src_point.node.node_context.loop.create_future()
+            res.set_result(None)
         return res
 
     def publish_signal(self, signal, instance, loop, args, kwargs):
