@@ -71,7 +71,9 @@ class Node(metaclass=SignalAndHandlerInitMeta):
             path = self.node_path + name
             value.node_bind(path, self.node_context, parent=self)
             res = self.on_node_add.notify(path=path, node=value)
-            res = utils.add_to_transaction(res, loop=self.loop)
+            if inspect.isawaitable(res):
+                # in some tests this is not true
+                res = utils.add_to_transaction(res, loop=self.loop)
             value.on_node_unbind.connect(self.node_child_on_unbind)
         super().__setattr__(name, value)
 
@@ -128,7 +130,9 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         res = self.on_node_bind.notify(node=self,
                                        path=self.node_path,
                                        parent=self.node_parent)
-        res = utils.add_to_transaction(res, loop=self.loop)
+        if inspect.isawaitable(res):
+            # in some tests this is not true
+            res = utils.add_to_transaction(res, loop=self.loop)
 
     def node_child_on_unbind(self, node, path, parent):
         """Called when a child node unbind itself, by default it will remove the
@@ -152,7 +156,9 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         res = self.on_node_unbind.notify(node=self,
                                          path=self.node_path,
                                          parent=self.node_parent)
-        res = utils.add_to_transaction(res, loop=self.loop)
+        if inspect.isawaitable(res):
+            # in some tests this is not true
+            res = utils.add_to_transaction(res, loop=self.loop)
         del self.node_path
         if self.node_context:
             del self.node_context
