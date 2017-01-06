@@ -58,35 +58,7 @@ def create_fake_session(global_registry, event_loop):
                 'authid': '<a_fake_id>'
             }
         else:
-            # simplified dispatch, exact or wildcard at the end:
-            # i.e. 'raccoon.api.pippo.pluto' or 'raccoon.api.pippo.'
-            chosen = ''
-            if name in registered_procs:
-                chosen = registered_procs[name]['func']
-            else:
-                candidates = [k for k in registered_procs.keys() if
-                              k.endswith('.')]
-                for c in candidates:
-                    if name.startswith(c) and \
-                       len(name.split('.')) == len(c.split('.')) and \
-                       len(c) > len(chosen):
-                        chosen = c
-
-                if chosen:
-                    chosen = registered_procs[chosen]['func']
-            if chosen and callable(chosen):
-                # always inject calldetails into the "details" kw
-                call_details = CallDetails(progress=None, caller=12345678,
-                                           caller_authid='mock_caller',
-                                           procedure=name)
-
-                result = chosen(*args, details=call_details, **kwargs)
-                if asyncio.iscoroutine(result):
-                    result = await result
-                fake_session.last_calldetails.return_value = call_details
-            else:
-                # TODO: should raise a proper autobahn error
-                raise ValueError('Procedure "{}" is not registered'.format(name))
+            result = await global_registry.call(fake_session, name, *args, **kwargs)
         return result
 
     async def register(func, name, options=None):
@@ -108,7 +80,7 @@ def create_fake_session(global_registry, event_loop):
             kwargs.pop('options')
         global_registry.publish(fake_session, topic, *args, **kwargs)
 
-    def dispatch(topic, *args, **kwargs):
+    def dispatch_publish(topic, *args, **kwargs):
         subscribers = registered_handlers.get(topic)
         if subscribers:
             edetails = EventDetails(87654321, # publication id
@@ -126,6 +98,38 @@ def create_fake_session(global_registry, event_loop):
                 if asyncio.iscoroutine(result):
                     asyncio.ensure_future(result, loop=event_loop)
 
+    async def dispatch_call(name, *args, **kwargs):
+        # simplified dispatch, exact or wildcard at the end:
+        # i.e. 'raccoon.api.pippo.pluto' or 'raccoon.api.pippo.'
+        chosen = ''
+        if name in registered_procs:
+            chosen = registered_procs[name]['func']
+        else:
+            candidates = [k for k in registered_procs.keys() if
+                          k.endswith('.')]
+            for c in candidates:
+                if name.startswith(c) and \
+                   len(name.split('.')) == len(c.split('.')) and \
+                   len(c) > len(chosen):
+                    chosen = c
+
+            if chosen:
+                chosen = registered_procs[chosen]['func']
+        if chosen and callable(chosen):
+            # always inject calldetails into the "details" kw
+            call_details = CallDetails(progress=None, caller=12345678,
+                                       caller_authid='mock_caller',
+                                       procedure=name)
+
+            result = chosen(*args, details=call_details, **kwargs)
+            if asyncio.iscoroutine(result):
+                result = await result
+            fake_session.last_calldetails.return_value = call_details
+        else:
+            # TODO: should raise a proper autobahn error
+            raise ValueError('Procedure "{}" is not registered'.format(name))
+        return result
+
     fake_session = mock.NonCallableMock()
     fake_session.call.side_effect = call
     fake_session.register.side_effect = register
@@ -134,7 +138,10 @@ def create_fake_session(global_registry, event_loop):
     fake_session.is_attached.return_value = True
     fake_session._procs.return_value = registered_procs
     fake_session._subs.return_value = registered_handlers
-    fake_session.dispatch.side_effect = dispatch
+    fake_session.dispatch_publish.side_effect = dispatch_publish
+    fake_session.dispatch_call.side_effect = dispatch_call
+    fake_session.procs = registered_procs
+    fake_session.subs = registered_handlers
     global_registry.add(fake_session)
     return fake_session
 
@@ -150,7 +157,19 @@ class GlobalRegistry:
     def publish(self, session, topic, *args, **kwargs):
         other_sessions = self.sessions - set((session,))
         for sess in other_sessions:
-            sess.dispatch(topic, *args, **kwargs)
+            sess.dispatch_publish(topic, *args, **kwargs)
+
+    async def call(self, session, uri, *args, **kwargs):
+        for sess in self.sessions:
+            try:
+                res = await sess.dispatch_call(uri, *args, **kwargs)
+                break
+            except ValueError:
+                pass
+        else:
+            raise ValueError('Procedure "{}" is not registered'.format(uri))
+        return res
+
 
 @pytest.fixture(scope='function')
 def global_registry():
