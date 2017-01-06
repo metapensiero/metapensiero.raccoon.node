@@ -19,7 +19,8 @@ from raccoon.rocky.node.node import Node, WAMPNode
 from raccoon.rocky.node.wamp import call
 
 
-def test_node_basic(node_context):
+@pytest.mark.asyncio
+async def test_node_basic(node_context, event_loop):
 
     node = Node()
 
@@ -27,6 +28,8 @@ def test_node_basic(node_context):
     assert node.node_root is node
     assert node.node_path is None
     assert node.node_context is None
+
+    assert node_context.loop is event_loop
 
     path = Path('raccoon.test')
 
@@ -49,7 +52,8 @@ def test_node_basic(node_context):
     assert node.node_context is None
 
 
-def test_node_add(node_context):
+@pytest.mark.asyncio
+async def test_node_add(node_context):
 
     n1 = Node()
     n2 = Node()
@@ -353,3 +357,48 @@ def test_node_unbind():
     parent.node_unbind()
     assert counter == 2 + 3 + 4
     assert not hasattr(parent, 'n20')
+
+
+@pytest.mark.asyncio
+async def test_call_dot(wamp_context,  wamp_context2,
+                        event_loop, events):
+
+    counter = 0
+    events.define('me_handler')
+
+    class RPCTest(WAMPNode):
+
+        foo = Signal()
+        foo.name = '.'
+
+        @call('.')
+        def me(self, **_):
+            nonlocal counter
+            counter += 1
+            return counter
+
+
+    class RPCTest2(WAMPNode):
+
+        @handler('test')
+        def on_test_dot(self, *_, **__):
+            events.me_handler.set()
+
+    base = Path('raccoon')
+    path = Path('test', base)
+    path2 = Path('test2', base)
+    async with transaction.begin() as t:
+        t.name = 'lele'
+        rpc_test = RPCTest()
+        rpc_test.name = 'rpc_test'
+        rpc_test.node_bind(path, wamp_context)
+        rpc_test2 = RPCTest2()
+        rpc_test2.node_bind(path2, wamp_context2)
+
+    res = await rpc_test2.call('@test')
+    assert res == counter == 1
+    await rpc_test.foo.notify()
+    assert events.me_handler.is_set()
+    events.me_handler.clear()
+    await rpc_test2.remote('@test').notify()
+    assert events.me_handler.is_set()

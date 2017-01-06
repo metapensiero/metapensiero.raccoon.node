@@ -177,12 +177,17 @@ class NodeWAMPManager:
         # deal with calls first
         if len(calls_data) > 0:
             try:
-                # build a mapping of (name, buond method) for the calls data on
+                # build a mapping of (name, bound method) for the calls data on
                 # this node
                 call_endpoints = self._build_instance_mapping(node, calls_data)
-                call_endpoints = tuple(('.'.join(path.path + (name,)), func) for
-                                       name, func in call_endpoints.items())
-                await self.reg_store.add_call(node, context, *call_endpoints)
+                uri_endpoints = []
+                for name, func in call_endpoints.items():
+                    if name == '.':
+                        p = path.path
+                    else:
+                        p = path.path + (name,)
+                    uri_endpoints.append(('.'.join(p), func))
+                await self.reg_store.add_call(node, context, *uri_endpoints)
             except WAMPApplicationError:
                 logger.exception("Error while registering procedures")
                 await node.on_node_registration_failure.notify(node=node,
@@ -192,15 +197,22 @@ class NodeWAMPManager:
         # deal with signals
         if len(signals_data) > 0:
             try:
-                names = signals_data.keys()
-                sig_endpoints = tuple(('.'.join(path.path + (name,)),
-                                       getattr(node, name).notify_no_ext, True)
-                                      for name in names)
+                sig_endpoints = []
+                iproxies = []
+                for name, sig in signals_data.items():
+                    if name == '.':
+                        p = path.path
+                    else:
+                        p = path.path + (name,)
+                    iproxy = sig.__get__(node)
+                    iproxies.append(iproxy)
+                    sig_endpoints.append(('.'.join(p),
+                                          iproxy.notify_no_ext, True))
+
                 points = await self.reg_store.add_subscription(node, context,
                                                                *sig_endpoints)
-                for ix, name in enumerate(names):
-                    iproxy = getattr(node, name)
-                    iproxy.wamp_point = points[ix]
+                for p, ip in zip(points, iproxies):
+                    ip.wamp_point = p
             except WAMPApplicationError:
                 logger.exception("Error while registering signals")
                 await node.on_node_registration_failure.notify(node=node,
@@ -356,14 +368,17 @@ class NodeWAMPManager:
         sname = signal.name
         if sname in NODE_INTERNAL_SIGNALS or not instance.node_registered:
             return
-        wamp_topic = instance.node_path + sname
+        if sname == '.':
+            wamp_topic = instance.node_path
+        else:
+            wamp_topic = instance.node_path + sname
         # mangle kwargs to expunge those to begin with 'local_', this
         # way the notifier can still add non JSON-encodable object as
         # params while being sure that this will not cause an error
         # during WAMP publication
         ext_kwargs = {k: v for k, v in kwargs.items()
                       if not k.startswith('local_')}
-        src_point = getattr(instance, sname).wamp_point
+        src_point = signal.__get__(instance).wamp_point
         return self.notify(src_point, wamp_topic, *args, **ext_kwargs)
 
     def register_class(self, cls, bases, namespace, signals, handlers):
@@ -453,7 +468,7 @@ class CallNameDecorator(metaclass=CallDecoMeta):
 
     def __init__(self, call_name=None):
         self.call_name = call_name
-        if call_name and '.' in call_name:
+        if call_name and '.' in call_name and len(call_name) > 1:
             raise RPCError('Call names cannot contain dots')
 
     def __call__(self, method):
