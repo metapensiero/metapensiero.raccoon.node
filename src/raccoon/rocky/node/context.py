@@ -47,6 +47,10 @@ class NodeContext:
             keys |= self._parent_context.keys()
         return keys
 
+    def items(self):
+        for k in self.keys():
+            yield (k, getattr(self, k))
+
     def new(self, **kwargs):
         """Poor man's prototype inheritation. This returns a new instance of
         NodeContext with data *chained* to this one. Non passed in values will
