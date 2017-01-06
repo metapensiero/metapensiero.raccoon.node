@@ -13,6 +13,9 @@ from autobahn.wamp.request import Subscription, Registration
 from autobahn.wamp.types import (SubscribeOptions, RegisterOptions)
 from . import utils
 
+REG_TYPE_CALL = 'call'
+REG_TYPE_SUB = 'subscription'
+
 
 class RPCPointMeta(type):
 
@@ -54,23 +57,27 @@ class StoreItem:
     subscription_cls = Subscription
     type = None
 
-    def __init__(self, store, uri):
+    def __init__(self, store, uri, type_):
         self.store = store
         self.uri = uri
         self.regs = WeakKeyDictionary()
         self.points = set()
+        self.type = type_
 
     def __len__(self):
         return len(self.points)
 
     def __repr__(self):
-        return "<{name} for '{uri}', type: '{type}'>".format(
+        return ("<{name} for '{uri}', type: '{type}', points: {points}, "
+                "regs: {regs}>".format(
             name=self.__class__.__name__,
-            uri=self.uri, type=self.type
-        )
+            uri=self.uri, type=self.type,
+            points=len(self),
+            regs=len(self.regs)
+        ))
 
     def add_point(self, node, func, is_source=False):
-        if self.type == 'call' and len(self) > 0:
+        if self.type == REG_TYPE_CALL and len(self) > 0:
             raise ValueError('Uri already registered')
         result = RPCPoint(node, func, self, is_source=is_source)
         self.points.add(result)
@@ -82,13 +89,11 @@ class StoreItem:
         if reg.session in self.regs and self.regs[reg.session] != 'pending':
             raise ValueError("This item has a registration already")
         self.regs[reg.session] = reg
-        if isinstance(reg, self.registration_cls):
-            res = 'call'
-        elif isinstance(reg, self.subscription_cls):
-            res = 'subscription'
-        else:
+        if not (((self.type == REG_TYPE_CALL) and
+            isinstance(reg, self.registration_cls)) or
+           ((self.type == REG_TYPE_SUB) and
+            isinstance(reg, self.subscription_cls))):
             raise ValueError("Registration type unknown")
-        self.type = res
         if self.store:
             self.store._index(self)
 
@@ -131,9 +136,9 @@ class StoreItem:
         res = None
         if self.regs and session in self.regs:
             reg = self.regs[session]
-            if self.type == 'call':
+            if self.type == REG_TYPE_CALL:
                 res = await reg.unregister()
-            elif self.type == 'subscription':
+            elif self.type == REG_TYPE_SUB:
                 res = await reg.unsubscribe()
             del self.regs[session]
         return res
@@ -142,7 +147,7 @@ class StoreItem:
 class RegistrationStore:
 
     def __init__(self, call_dispatcher, event_dispatcher):
-        self.uri_to_item = {}
+        self.uri_to_item = {REG_TYPE_CALL: {}, REG_TYPE_SUB: {}}
         self.node_to_items = {}
         self.call_dispatcher = call_dispatcher
         self.event_dispatcher = event_dispatcher
@@ -172,7 +177,7 @@ class RegistrationStore:
         results = []
         reg_items = []
         for uri, func in uri_funcs:
-            reg_item = self.get(uri)
+            reg_item = self.get(uri, REG_TYPE_CALL)
             point = reg_item.add_point(node, func, is_source=True)
             results.append(point)
             reg_items.append(reg_item)
@@ -213,7 +218,7 @@ class RegistrationStore:
         results = set()
         for uri, points in uri_map.items():
             for ix, func, is_source in points:
-                reg_item = self.get(uri)
+                reg_item = self.get(uri, REG_TYPE_SUB)
                 point = reg_item.add_point(node, func, is_source=is_source)
                 results.add((ix, point))
                 if not reg_item.registration(session):
@@ -238,28 +243,31 @@ class RegistrationStore:
         return tuple(zip(*sorted(results, key=lambda e: e[0])))[1]
 
     def clear(self):
-        for item in set(self.uri_to_item.values()):
-            self.expunge(item)
+        for type_, uri_item in self.uri_to_item.items():
+            for item in set(uri_item.values()):
+                self.expunge(item)
 
     def expunge(self, item):
-        assert item in self.uri_to_item.values()
+        assert item.type is not None
+        assert item in self.uri_to_item[item.type].values()
         self._unindex(item)
-        del self.uri_to_item[item.uri]
+        del self.uri_to_item[item.type][item.uri]
         del item.store
 
-    def get(self, uri):
+    def get(self, uri, type_):
+        assert type_ in (REG_TYPE_CALL, REG_TYPE_SUB)
         assert isinstance(uri, str)
-        if uri not in self.uri_to_item:
-            self.uri_to_item[uri] = StoreItem(self, uri)
-        return self.uri_to_item[uri]
+        if uri not in self.uri_to_item[type_]:
+            self.uri_to_item[type_][uri] = StoreItem(self, uri, type_)
+        return self.uri_to_item[type_][uri]
 
-    async def remove(self, node, context, uri=None, func=None):
+    async def remove(self, node, context, uri=None, func=None, type_=None):
         if uri is None:
-            assert func is None
+            assert func is None and type_ is None
         unregs = set()
         session = context.wamp_session
         if uri:
-            item = self.get(uri)
+            item = self.get(uri, type_)
             item.remove(node, func)
             if item.empty(session):
                 unregs.add(item)

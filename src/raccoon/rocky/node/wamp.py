@@ -17,7 +17,7 @@ from autobahn.wamp.exception import ApplicationError as WAMPApplicationError
 from metapensiero.signal import (ExternalSignallerAndHandler,
                                  SignalAndHandlerInitMeta)
 
-from .registrations import RegistrationStore, RPCPoint
+from .registrations import RegistrationStore, RPCPoint, REG_TYPE_CALL, REG_TYPE_SUB
 from . import utils
 
 
@@ -111,7 +111,7 @@ class NodeWAMPManager:
     def _dispatch_event(self, src_session, src_point, uri, *args, **kwargs):
         """Dispatch an event to the right endpoint.
         """
-        reg_item = self.reg_store.get(uri)
+        reg_item = self.reg_store.get(uri, REG_TYPE_SUB)
         results = []
         for point in reg_item.points:
             # skip destinations registered for sessions different than the
@@ -141,7 +141,7 @@ class NodeWAMPManager:
     def _dispatch_procedure(self, src_session, uri, *args, **kwargs):
         """Dispatch a call from :term:`WAMP` to the right endpoint.
         """
-        reg_item = self.reg_store.get(uri)
+        reg_item = self.reg_store.get(uri, REG_TYPE_CALL)
         assert len(reg_item) == 1  # procedure registrations cannot have more
                                    # than one endpoint
         point = tuple(reg_item.points)[0]
@@ -251,7 +251,7 @@ class NodeWAMPManager:
             path = node.node_path.resolve(path, node.node_context)
         str_path = str(path)
         session = node.node_context.wamp_session
-        item = self.reg_store.get(str_path)
+        item = self.reg_store.get(str_path, REG_TYPE_CALL)
         if len(item) > 0 and session in item.regs:
             details = {'procedure': str_path, 'caller': 'local'}
             result = self._dispatch_procedure(session, str_path, *args,
@@ -288,7 +288,7 @@ class NodeWAMPManager:
             path = node.node_path.resolve(path, node.node_context)
         try:
             await self.reg_store.remove(node, node.node_context, str(path),
-                                        handler)
+                                        handler, REG_TYPE_SUB)
         except WAMPApplicationError:
             logger.exception("Error while unregistering a subscription to '%s'",
                              path)
@@ -309,7 +309,7 @@ class NodeWAMPManager:
             path = src_point.node.node_path.resolve(path,
                                                     src_point.node.node_context)
         str_path = str(path)
-        item = self.reg_store.get(str_path)
+        item = self.reg_store.get(str_path, REG_TYPE_SUB)
         session = src_point.node.node_context.wamp_session
         logger.debug("Publishing to WAMP topic at '%s', args: '%s', kw:"
                      " '%s'", str_path, args, kwargs)
