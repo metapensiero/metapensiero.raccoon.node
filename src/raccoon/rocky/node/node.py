@@ -3,7 +3,7 @@
 # :Created:   mar 16 feb 2016 15:58:07 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 import inspect
@@ -78,8 +78,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         super().__setattr__(name, value)
 
     def __str__(self):
-        return "%s instance at '%s''" % (self.__class__.__name__,
-                                         self.node_path)
+        return "%s instance at '%s'" % (self.__class__.__name__,
+                                        self.node_path)
 
     def _node_on_parent_unbind(self, **_):
         self.node_parent.on_node_unbind.disconnect(self._node_on_parent_unbind)
