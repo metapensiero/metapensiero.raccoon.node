@@ -101,8 +101,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         parent. The context is cloned so that changes to it will affect only a
         branch.
 
-        It emits an ``on_node_bind`` event with the the following
-        keyword arguments:
+        It emits an ``on_node_bind`` event with the following keyword
+        arguments:
 
         node:
           this node
@@ -111,7 +111,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         parent:
           this node's ``node_parent``, if any
 
-        :param path: and instance of the path or a dotted string or a tuple.
+        :param path: an instance of the path or a dotted string or a tuple.
         :param context: an instance of the current context or `None`.
         :param parent: a parent node or `None`.
         :type path: an instance of :class:`~raccoon.rocky.node.path.Path`
