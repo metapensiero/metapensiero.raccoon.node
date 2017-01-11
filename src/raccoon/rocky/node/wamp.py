@@ -415,6 +415,7 @@ class NodeWAMPManager:
                 wsubs[hname] = sig_name
         for hname in wsubs.keys():
             del handlers[hname]
+
         # find calls
         for aname, avalue in namespace.items():
             call_name = CallNameDecorator.is_call(aname, avalue)
