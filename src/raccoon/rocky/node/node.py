@@ -29,10 +29,21 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     "Signal emitted when a node is added by setting an attribute to it."
 
     on_node_bind = Signal()
-    "Signal emitted at the end of node_bind() call."
+    """Signal emitted at the end of node_bind() call. Every callback will receive
+    the following parameters:
+
+    node
+      the bound node. An instance of `Node`
+    path
+      the path where the node is bound. It's also available as ``node.node_path``.
+      It's an instance of `Path`
+    parent
+      the parent node. An instance of `Node`.
+    """
 
     on_node_unbind = Signal()
-    "Signal emitted at the end of node_unbind() call."
+    """Signal emitted at the end of node_unbind() call. Every callback will
+    receive the same parameters as the `on_node_bind` signal."""
 
     node_context = None
     """An instance of the
