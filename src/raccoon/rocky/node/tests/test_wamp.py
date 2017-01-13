@@ -67,7 +67,7 @@ async def test_register_and_call_rpc(wamp_context, event_loop):
     rpc_test = RPCTest(wamp_context, path)
 
     with patch.object(rpc_test, 'callme') as callme:
-        transaction.begin()
+        transaction.begin(event_loop)
         rpc_test.node_register()
         await transaction.wait(event_loop)
         wsess = wamp_context.wamp_session
@@ -106,7 +106,7 @@ async def test_subscriber_and_publisher(wamp_context, wamp_context2, event_loop)
     rpc_test2 = RPCTest2(wamp_context2, path2)
 
     with patch.object(rpc_test2, 'test_handler') as thandler:
-        transaction.begin()
+        transaction.begin(event_loop)
         rpc_test.node_register()
         rpc_test2.node_register()
         await transaction.wait(event_loop)
@@ -121,5 +121,5 @@ async def test_subscriber_and_publisher(wamp_context, wamp_context2, event_loop)
         rpc_test.on_test_event.notify(1, 'a', kw='foo')
         await transaction.wait(event_loop)
         thandler.assert_called_with(1, 'a', kw='foo',
-                                    details=wsess.last_publish_details.return_value)
+            details=wsess.last_publish_details.return_value)
         await transaction.end(event_loop)
