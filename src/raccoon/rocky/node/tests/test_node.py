@@ -35,7 +35,8 @@ async def test_node_basic(node_context, event_loop):
 
     with patch.object(node, 'on_node_bind') as bind_event:
         node.node_bind(path, node_context)
-        bind_event.notify.assert_called_with(node=node, path=path, parent=None)
+        bind_event.notify.assert_called_with(node=node, path=path, parent=None,
+                                             run_async=True)
 
     assert node.loop is node_context.loop
     assert node.node_root is node

@@ -140,7 +140,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
             parent.on_node_unbind.connect(self._node_on_parent_unbind)
         res = self.on_node_bind.notify(node=self,
                                        path=self.node_path,
-                                       parent=self.node_parent)
+                                       parent=self.node_parent,
+                                       run_async=True)
         if inspect.isawaitable(res):
             # in some tests this is not true
             res = utils.add_to_transaction(res, loop=self.loop)
