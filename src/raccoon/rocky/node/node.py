@@ -239,7 +239,7 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
 
     def node_bind(self, path, context=None, parent=None):
         """Specialized to attach this node to the parent's
-        :attr:`on_node_register` and :data:`on_node_unbind` signals. It
+        :attr:`on_node_register` and :attr:`on_node_unbind` signals. It
         automatically calls :meth:`node_register`.
         """
         super().node_bind(path, context, parent)

@@ -241,7 +241,7 @@ class NodeWAMPManager:
         logger.debug("Completed registration of: %s", node)
 
     async def _on_node_unregister(self, node, context):
-        """Unregisters event handlers and calls from :term:`WAMP`."""
+        """Unregister event handlers and calls from :term:`WAMP`."""
         assert context.wamp_session.is_attached()
         logger.debug("Beginning unregistration of: %s", node)
         try:
@@ -452,7 +452,7 @@ class WAMPInitMeta(SignalAndHandlerInitMeta.with_external(node_wamp_manager)):
 
 
 class RPCError(Exception):
-    pass
+    "Exception raised when an RPC cannot be performed."
 
 
 class CallDecoMeta(type):

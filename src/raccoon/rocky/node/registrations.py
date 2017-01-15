@@ -35,6 +35,17 @@ class RPCPointMeta(type):
 
 
 class RPCPoint(metaclass=RPCPointMeta):
+    """Information about a single end point of an RPC.
+
+    :type node: :class:`~.node.Node` instance
+    :param node: the related node
+    :type func: callable
+    :param func: the function that will be called
+    :type store_item: :class:`StoreItem` instance
+    :param store_item: the item containing the point
+    :type is_source: bool
+    :keyword is_source: whether the point is a *source* or an *end* point
+    """
 
     def __init__(self, node, func=None, store_item=None, *, is_source=False):
         self.store_item = store_item
@@ -54,6 +65,15 @@ class RPCPoint(metaclass=RPCPointMeta):
 
 
 class StoreItem:
+    """Information about a single RPC.
+
+    :type store: :class:`RegistrationStore` instance
+    :param store: the related store
+    :type uri: str
+    :param uri: the name of the RPC
+    :type type_: str
+    :param type_: the kind of RPC, either ``"call"`` or ``"subscription"``
+    """
 
     registration_cls = Registration
     subscription_cls = Subscription
@@ -147,6 +167,17 @@ class StoreItem:
 
 
 class RegistrationStore:
+    """A registry for RPC end points, either *calls* or *subscriptions*.
+
+    :type call_dispatcher: callable
+    :param call_dispatcher: the responsible of dispatching an RPC call: it
+      must be a function accepting at least two arguments, a *session* and an
+      *uri*
+    :type event_dispatcher: callable
+    :param event_dispatcher: the responsible of dispatching an RPC event: it
+      must be a function accepting at least three arguments, a *session*, a
+      *source point* and an *uri*
+    """
 
     def __init__(self, call_dispatcher, event_dispatcher):
         self.uri_to_item = {REG_TYPE_CALL: {}, REG_TYPE_SUB: {}}
@@ -171,7 +202,7 @@ class RegistrationStore:
 
     async def add_call(self, node, context, *uri_funcs):
         """Register calls (procedures) with wamp. It expects `uri_funcs`
-        to be a tuple of ``(uri, func)`` items"""
+        to be a tuple of ``(uri, func)`` items."""
         session = context.wamp_session
         opts = node.node_context.call_registration_options or \
                RegisterOptions(details_arg='details')
@@ -200,9 +231,11 @@ class RegistrationStore:
 
     async def add_subscription(self, node, context, *uri_funcs):
         """Register handlers (subscriptions) with wamp. It expects `uri_funcs`
-        to be a tuple of ``(uri, func)`` items. Differently than the
-        "call" conterpart, here the same uri can appear in more than one item,
-        because it's possible to have multiple subscriptions per topic.
+        to be a tuple of ``(uri, func)`` items.
+
+        Differently than the *call* counterpart, here the same URI can appear
+        in more than one item, because it's possible to have multiple
+        subscriptions per topic.
         """
         session = context.wamp_session
         opts = node.node_context.subscription_registration_options or \
@@ -257,6 +290,14 @@ class RegistrationStore:
         del item.store
 
     def get(self, uri, type_):
+        """Retrieve information about given `uri` of a particular `type_`.
+
+        :type uri: str
+        :param uri: the name of the RPC
+        :type type_: str
+        :param type_: the kind of RPC, either ``"call"`` or ``"subscription"``
+        :return: a :class:`StoreItem` instance with requested information
+        """
         assert type_ in (REG_TYPE_CALL, REG_TYPE_SUB)
         assert isinstance(uri, str)
         if uri not in self.uri_to_item[type_]:

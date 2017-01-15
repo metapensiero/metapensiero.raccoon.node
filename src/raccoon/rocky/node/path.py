@@ -59,14 +59,14 @@ class PathMeta(type):
 class Path(metaclass=PathMeta):
     """Helper used to resolve call, subscribe and publish paths.
 
-    This helps especially dealing with a notion of a *base* path and a
+    :param path: either a *dotted* string or a tuple of fragments
+    :param base: optional base path, same spec
+
+    This helps especially when dealing with a notion of a *base* path and a
     *relative* one to it.
     """
 
     def __init__(self, path,  base=None):
-        """:param path: either a *dotted* string or a tuple of fragments
-        :param base: optional base path, same spec
-        """
         self._path = norm_path(path)
         if base and not isinstance(base, Path):
             base = Path(base)
@@ -126,7 +126,7 @@ class Path(metaclass=PathMeta):
     def resolve(self, path, context=None):
         """Resolve a potentially relative path into an absolute path.
 
-        :param value: either a *dotted* string or a sequence of path fragments
+        :param path: either a *dotted* string or a sequence of path fragments
         :returns: an instance of this class
 
         If the path is already absolute it will be returned as-is.  A relative

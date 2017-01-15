@@ -13,7 +13,7 @@ undefined = object()
 
 
 class NodeContext:
-    """The run context of a tree of :class:`.node.Node` instances."""
+    """The run context of a tree of :class:`~.node.Node` instances."""
 
     CONFIG_KEYS = ['loop', 'path_resolvers']
 
@@ -53,9 +53,12 @@ class NodeContext:
             yield (k, getattr(self, k))
 
     def new(self, **kwargs):
-        """Poor man's prototype inheritation. This returns a new instance of
-        NodeContext with data *chained* to this one. Non passed in values will
-        be inherited from the instance where this method is called."""
+        """Poor man's prototype inheritation.
+
+        This returns a new instance of :class:`NodeContext` with data
+        *chained* to this one. Non passed in values will be inherited
+        from the instance where this method is called.
+        """
         nc = self.__new__(type(self))
         nc._parent_context = self
         for k, v in kwargs.items():
@@ -73,7 +76,7 @@ class NodeContext:
 
 
 class WAMPNodeContext(NodeContext):
-    """A Node context with WAMP management details."""
+    """A :class:`~.node.Node` context with WAMP management details."""
 
     CONFIG_KEYS = NodeContext.CONFIG_KEYS + [
         'call_registration_options',
