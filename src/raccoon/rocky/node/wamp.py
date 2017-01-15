@@ -3,7 +3,7 @@
 # :Created:   mar 16 feb 2016 16:17:35 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 from abc import ABCMeta, abstractmethod
@@ -76,14 +76,14 @@ class NodeWAMPManager:
                 name in member_names.items()}
 
     def _com_guard(self, node):
-        """Verify that external communication is possible"""
+        """Verify that external communication is possible."""
         if not (node.node_context.wamp_session and
                 node.node_context.wamp_session.is_attached()):
             raise RPCError('WAMP session is not initialized properly')
 
     def _pull_errors(self, uri, future):
-        """Get the value of an awaitable result returned by dispatch, just to make
-        visible possible errors."""
+        """Get the value of an awaitable result returned by dispatch, just to
+        make visible possible errors."""
         try:
             future.result()
         except:
@@ -101,8 +101,8 @@ class NodeWAMPManager:
                 result = func(*args, **kwargs)
                 if inspect.isawaitable(result):
                     result = asyncio.ensure_future(result)
-                    result.add_done_callback(functools.partial(self._pull_errors,
-                                                               uri))
+                    result.add_done_callback(
+                        functools.partial(self._pull_errors, uri))
             except:
                 logger.exception("Error while dispatching for '%s'", uri)
                 raise
@@ -126,8 +126,8 @@ class NodeWAMPManager:
             kw = kwargs.copy()
             if point.is_source:  # it is the signal
                 kw.pop('details', None)
-                logger.debug("Dispatching a WAMP event to '%s', args: '%s', kw:"
-                             " '%s'", uri, args, kw)
+                logger.debug("Dispatching a WAMP event to '%s', args:"
+                             "'%s', kw: '%s'", uri, args, kw)
             res = self._dispatch(uri, point.func, wrapper, args, kw)
             if res and asyncio.iscoroutine(res):
                 results.append(res)
@@ -135,8 +135,8 @@ class NodeWAMPManager:
         if len(results) == 1:
             return results[0]
         elif len(results) > 1:
-            return asyncio.gather(*results)  # WARN: it's impossible to define a
-                                             # loop here
+            return asyncio.gather(*results)  # WARN: it's impossible to define
+                                             # a loop here
 
     def _dispatch_procedure(self, src_session, uri, *args, **kwargs):
         """Dispatch a call from :term:`WAMP` to the right endpoint.
@@ -152,8 +152,8 @@ class NodeWAMPManager:
         return self._dispatch(uri, point.func, wrapper, args, kwargs)
 
     async def _on_node_register(self, node, context):
-        """It's an handler registered at class registration time. It works on a single
-        node and registers marked event handlers and procedures with
+        """It's an handler registered at class registration time. It works on
+        a single node and registers marked event handlers and procedures with
         :term:`WAMP`.
 
         This is the second step of the registration of a node object and
@@ -180,8 +180,8 @@ class NodeWAMPManager:
         # deal with calls first
         if len(calls_data) > 0:
             try:
-                # build a mapping of (name, bound method) for the calls data on
-                # this node
+                # build a mapping of (name, bound method) for the calls data
+                # on this node
                 call_endpoints = self._build_instance_mapping(node, calls_data)
                 uri_endpoints = []
                 for name, func in call_endpoints.items():
@@ -226,9 +226,10 @@ class NodeWAMPManager:
         if len(subs_data) > 0:
             try:
                 sub_endpoints = self._build_instance_mapping(node, subs_data)
-                sub_endpoints = tuple((str(path.resolve(name)), func, False) for
-                                      name, func in sub_endpoints.items())
-                await self.reg_store.add_subscription(node, context, *sub_endpoints)
+                sub_endpoints = tuple((str(path.resolve(name)), func, False)
+                                      for name, func in sub_endpoints.items())
+                await self.reg_store.add_subscription(node, context,
+                                                      *sub_endpoints)
             except WAMPApplicationError:
                 logger.exception("Error while registering subscriptions")
                 await node.on_node_registration_failure.notify(node=node,
@@ -251,7 +252,7 @@ class NodeWAMPManager:
         logger.debug("Completed unregistration of: %s", node)
 
     def call(self, node, path, *args, **kwargs):
-        """Call another rpc endpoint published via :term:`WAMP`.
+        """Call another RPC endpoint published via :term:`WAMP`.
 
         .. important::
           The ``disclose_me=True`` option (was the default in old
@@ -292,12 +293,12 @@ class NodeWAMPManager:
             await self.reg_store.add_subscription(node, node.node_context,
                                                   (str(path), handler, False))
         except WAMPApplicationError:
-            logger.exception("Error while registering a subscription to '%s'",
+            logger.exception("Error while registering subscription to '%s'",
                              path)
             raise
 
     async def disconnect(self, node, path, handler):
-        """Emulate signal api to connect an handler to a subscription."""
+        """Emulate signal api to disconnect an handler from a subscription."""
         self._com_guard(node)
         if isinstance(path, str):
             path = node.node_path.resolve(path, node.node_context)
@@ -305,7 +306,7 @@ class NodeWAMPManager:
             await self.reg_store.remove(node, node.node_context, str(path),
                                         handler, REG_TYPE_SUB)
         except WAMPApplicationError:
-            logger.exception("Error while unregistering a subscription to '%s'",
+            logger.exception("Error while unregistering subscription to '%s'",
                              path)
             raise
 
@@ -316,13 +317,13 @@ class NodeWAMPManager:
         """Execute a notification on the signal at `path`. This takes care of
         executing local dispatching for the sessions controlled by this
         manager, if any. `src_point` can be an instance of EndpointDef to
-        exclude from the notification. This is only used by ``publish_signal``
-        later on to avoid circular signalling.
+        exclude from the notification. This is only used by
+        :meth:`publish_signal` later on to avoid circular signalling.
         """
         self._com_guard(src_point.node)
         if isinstance(path, str):
-            path = src_point.node.node_path.resolve(path,
-                                                    src_point.node.node_context)
+            path = src_point.node.node_path.resolve(
+                path, src_point.node.node_context)
         str_path = str(path)
         item = self.reg_store.get(str_path, REG_TYPE_SUB)
         session = src_point.node.node_context.wamp_session
@@ -367,7 +368,6 @@ class NodeWAMPManager:
         The return value can be a coroutine because the Signal
         instance that calls into this will add it to the current
         transaction, if any.
-
         """
         sname = signal.name
         if sname in NODE_INTERNAL_SIGNALS or not instance.node_registered:

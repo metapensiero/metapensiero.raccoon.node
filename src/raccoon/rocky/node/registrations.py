@@ -3,7 +3,7 @@
 # :Created:   mar 16 feb 2016 16:17:35 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 from functools import partial
@@ -168,7 +168,7 @@ class RegistrationStore:
             self._items_for_node(rpc_point.node).discard(item)
 
     async def add_call(self, node, context, *uri_funcs):
-        """Register calls (procedures) with wamp. It expects ``uri_funcs``
+        """Register calls (procedures) with wamp. It expects `uri_funcs`
         to be a tuple of ``(uri, func)`` items"""
         session = context.wamp_session
         opts = node.node_context.call_registration_options or \
@@ -197,7 +197,7 @@ class RegistrationStore:
         return tuple(results)
 
     async def add_subscription(self, node, context, *uri_funcs):
-        """Register handlers (subscriptions) with wamp. It expects ``uri_funcs``
+        """Register handlers (subscriptions) with wamp. It expects `uri_funcs`
         to be a tuple of ``(uri, func)`` items. Differently than the
         "call" conterpart, here the same uri can appear in more than one item,
         because it's possible to have multiple subscriptions per topic.

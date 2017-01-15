@@ -29,36 +29,36 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     "Signal emitted when a node is added by setting an attribute to it."
 
     on_node_bind = Signal()
-    """Signal emitted at the end of node_bind() call. Every callback will receive
-    the following parameters:
+    """Signal emitted at the end of node_bind() call. Every callback will
+    receive the following parameters:
 
-    node
-      the bound node. An instance of `Node`
-    path
-      the path where the node is bound. It's also available as ``node.node_path``.
-      It's an instance of `Path`
-    parent
-      the parent node. An instance of `Node`.
+    node : :class:`Node`
+      the bound node
+
+    path : :class:`~.path.Path`
+      the path where the node is bound, available also as ``node.node_path``
+
+    parent : :class:`Node`
+      the parent node
     """
 
     on_node_unbind = Signal()
-    """Signal emitted at the end of node_unbind() call. Every callback will
-    receive the same parameters as the `on_node_bind` signal."""
+    """Signal emitted at the end of :meth:`node_unbind` call. Every callback
+    will receive the same parameters as the `on_node_bind` signal.
+    """
 
     node_context = None
-    """An instance of the
-    :py:class:`raccoon.rocky.node.context.NodeContext` class that
-    supplies informations for the :term:`WAMP` setup or possibly other
-    kind of informations.
+    """An instance of the :class:`~.context.NodeContext` class that supplies
+    informations for the :term:`WAMP` setup or possibly other kind of
+    informations.
     """
 
     node_parent = None
     """Contains the parent node instance, if any."""
 
     node_path = None
-    """After ``bind()`` operation contains the
-    :py:class:`raccoon.rocky.node.path.Path` that describes the
-    position in the tree and the base path for :term:`WAMP`
+    """After :meth:`bind` operation contains the :class:`~.path.Path` that
+    describes the position in the tree and the base path for :term:`WAMP`
     functionality.
     """
 
@@ -76,7 +76,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         that it also binds the given node to the path of the parent
         node plus the name of the attribute as fragment.
 
-        It fires the ``on_node_add`` event.
+        It fires the :attr:`on_node_add` event.
         """
         if isinstance(value, Node) and name != 'node_parent':
             path = self.node_path + name
@@ -112,23 +112,24 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         parent. The context is cloned so that changes to it will affect only a
         branch.
 
-        It emits an ``on_node_bind`` event with the following keyword
-        arguments:
+        It emits an ``on_node_bind`` *asynchronous* event with the following
+        keyword arguments:
 
-        node:
+        node : :class:`Node`
           this node
-        path:
+
+        path : :class:`~.path.Path`
           this node's ``node_path``
-        parent:
+
+        parent : :class:`Node`
           this node's ``node_parent``, if any
 
+        :type path: an instance of :class:`~.path.Path`
         :param path: an instance of the path or a dotted string or a tuple.
-        :param context: an instance of the current context or `None`.
-        :param parent: a parent node or `None`.
-        :type path: an instance of :class:`~raccoon.rocky.node.path.Path`
-        :type context: an instance of
-          :class:`~raccoon.rocky.node.context.NodeContext`
-        :type parent: an instance of :class:`~.Node`
+        :type context: an instance of :class:`~.context.NodeContext`
+        :param context: an instance of the current context or ``None``.
+        :type parent: an instance of :class:`Node`
+        :param parent: a parent node or ``None``.
         """
         assert len(path) > 0
         if context and isinstance(context, NodeContext):
@@ -147,8 +148,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
             res = utils.add_to_transaction(res, loop=self.loop)
 
     def node_child_on_unbind(self, node, path, parent):
-        """Called when a child node unbind itself, by default it will remove the
-        attribute reference on it.
+        """Called when a child node unbind itself, by default it will remove
+        the attribute reference on it.
         """
         self._node_remove_child(node)
         node.on_node_unbind.disconnect(self.node_child_on_unbind)
@@ -180,27 +181,27 @@ class Node(metaclass=SignalAndHandlerInitMeta):
 
 class WAMPNode(Node, metaclass=WAMPInitMeta):
     """A Node subclass to deal with WAMP stuff. An instance gets
-    local and wamp pub/sub, wamp rpc and automatic tree addressing.
+    local and WAMP pub/sub, WAMP RPC and automatic tree addressing.
 
     This is done by performing another two operations: *register* and
     *unregister* to be performed possibly at a different (later) time
     than the bind operation.
 
     This class is coded to run in tandem with the
-    :py:class:`.context.WAMPNodeContext` class that supplies the
+    :class:`~.context.WAMPNodeContext` class that supplies the
     necessary informations about WAMP connection
-    state. ``node_register()`` should be called after the WAMP session
+    state. :meth:`node_register` should be called after the WAMP session
     has *joined* the Crossbar router.
     """
 
     node_registered = False
-    """It's t ``True`` if this mode's node_register() has been called and that
-    this node has successfully completed the registration process.
+    """It's ``True`` if this mode's :meth:`node_register` has been called and
+    that this node has successfully completed the registration process.
     """
 
     on_node_register = Signal()
-    """Signal emitted when node_register() is called. Its events have two
-    keywords, ``node`` and ``context``.
+    """Signal emitted when :meth:`node_register` is called. Its events have
+    two keywords, ``node`` and ``context``.
     """
 
     on_node_registration_failure = Signal()
@@ -214,8 +215,8 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
     """
 
     on_node_unregister = Signal()
-    """Signal emitted when node_unregister() is called. Its events have two
-    keywords, ``node`` and ``context``.
+    """Signal emitted when :meth:`node_unregister` is called. Its events have
+    two keywords, ``node`` and ``context``.
     """
 
     def _node_on_parent_register(self, node, context):
@@ -238,8 +239,8 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
 
     def node_bind(self, path, context=None, parent=None):
         """Specialized to attach this node to the parent's
-        ``on_node_register`` and ``on_node_unbind`` signals. It
-        automatically calls :meth:`.node_register`.
+        :attr:`on_node_register` and :data:`on_node_unbind` signals. It
+        automatically calls :meth:`node_register`.
         """
         super().node_bind(path, context, parent)
         if parent and isinstance(parent, WAMPNode):
@@ -248,7 +249,7 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
 
     def node_register(self):
         """Register this node to the :term:`WAMP` session. It emits the
-        ``on_node_register`` event."""
+        :attr:`on_node_register` event."""
         if not self.node_registered and self.node_context and \
            self.node_context.wamp_session and \
            self.node_context.wamp_session.is_attached():
@@ -257,7 +258,7 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
             res = utils.add_to_transaction(res, loop=self.loop)
 
     def node_unbind(self):
-        """Specialized to call :meth:`.node_unregister`."""
+        """Specialized to call :meth:`node_unregister`."""
         def when_unregistered(future=None):
             with utils.in_transaction(loop=self.loop, task=future):
                 super(WAMPNode, self).node_unbind()
@@ -273,7 +274,7 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
 
     def node_unregister(self):
         """Unregisters the node from the :term:`WAMP` session. It emits the
-        ``on_node_unregister`` event."""
+        :attr:`on_node_unregister` event."""
         if self.node_registered:
             res = self.on_node_unregister.notify(node=self,
                                                  context=self.node_context)

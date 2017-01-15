@@ -3,7 +3,7 @@
 # :Created:   mar 16 feb 2016 18:10:22 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 import asyncio
@@ -12,9 +12,7 @@ undefined = object
 
 
 class NodeContext:
-    """The run context of a tree of :py:class:`raccoon.rocky.node.Node`
-    instances.
-    """
+    """The run context of a tree of :class:`.node.Node` instances."""
 
     CONFIG_KEYS = ['loop', 'path_resolvers']
 

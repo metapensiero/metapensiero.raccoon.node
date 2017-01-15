@@ -14,7 +14,7 @@ class ProxyError(Exception):
 
 
 class Proxy:
-    """This is a glimpse into the 'other side', a medium towards
+    """This is a glimpse into the *other side*, a medium towards
     addressability of a possibly remote tree of objects.
     """
 

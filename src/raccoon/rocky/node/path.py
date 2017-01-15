@@ -3,12 +3,13 @@
 # :Created:   mar 16 feb 2016 19:46:39 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
 from collections import abc
 import re
 from weakref import WeakValueDictionary
+
 
 PATHSEP = '.'
 INVALID_URI_CHARS = re.compile('[^a-z0-9._*]', flags=re.ASCII)
@@ -78,7 +79,7 @@ class Path(metaclass=PathMeta):
     @property
     def path(self):
         """The absolute path, maybe the composition of the base path with the
-        'local' one."""
+        *local* one."""
         if self.base is not None and self.base is not self:
             result = self.base.path + self._path
         else:
@@ -110,7 +111,7 @@ class Path(metaclass=PathMeta):
                 else:
                     base = None
             else:
-                raise PathError("Cannot add two path with a base path")
+                raise PathError("Cannot add two paths with a base path")
         return type(self)(path, base)
 
     __getattr__ = __add__
@@ -131,7 +132,6 @@ class Path(metaclass=PathMeta):
         If the path is already absolute it will be returned as-is.  A relative
         address is marked by an initial '@', the rest of the address will be
         added to the session path.
-
         """
         if isinstance(path, Path):
             raise PathError("The path to resolve cannot be a Path instance")
