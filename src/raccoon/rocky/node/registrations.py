@@ -10,8 +10,10 @@ from functools import partial
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from autobahn.wamp.request import Subscription, Registration
-from autobahn.wamp.types import (SubscribeOptions, RegisterOptions)
+from autobahn.wamp.types import SubscribeOptions, RegisterOptions
+
 from . import utils
+
 
 REG_TYPE_CALL = 'call'
 REG_TYPE_SUB = 'subscription'

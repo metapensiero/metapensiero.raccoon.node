@@ -222,7 +222,7 @@ class NodeWAMPManager:
                                                                context=context)
                 raise
 
-        # deal with subscritptions
+        # deal with subscriptions
         if len(subs_data) > 0:
             try:
                 sub_endpoints = self._build_instance_mapping(node, subs_data)
