@@ -8,7 +8,8 @@
 
 import asyncio
 
-undefined = object
+
+undefined = object()
 
 
 class NodeContext:
