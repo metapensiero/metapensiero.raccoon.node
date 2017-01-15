@@ -29,8 +29,11 @@ def add_to_transaction(*coros, loop=None, task=None):
     if trans:
         res = trans.add(*coros)
     else:
-        res = asyncio.ensure_future(*coros, loop=loop)
-    return res
+        res = [asyncio.ensure_future(c, loop=loop) for c in coros]
+    if len(coros) == 1:
+        return res[0]
+    else:
+        return res
 
 
 @contextlib.contextmanager
