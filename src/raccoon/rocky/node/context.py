@@ -14,7 +14,8 @@ undefined = object()
 
 class NodeContext:
     """
-    The run context of a tree of :class:`~raccoon.rocky.node.Node` instances.
+    The run context of a tree of :class:`~raccoon.rocky.node.node.Node`
+    instances.
     """
 
     CONFIG_KEYS = ['loop', 'path_resolvers']
@@ -79,7 +80,8 @@ class NodeContext:
 
 class WAMPNodeContext(NodeContext):
     """
-    A :class:`~raccoon.rocky.node.Node` context with WAMP management details.
+    A :class:`~raccoon.rocky.node.node.Node` context with WAMP management
+    details.
     """
 
     CONFIG_KEYS = NodeContext.CONFIG_KEYS + [

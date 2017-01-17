@@ -37,7 +37,7 @@ class RPCPointMeta(type):
 class RPCPoint(metaclass=RPCPointMeta):
     """Information about a single end point of an RPC.
 
-    :type node: :class:`~raccoon.rocky.node.Node` instance
+    :type node: :class:`~raccoon.rocky.node.node.Node` instance
     :param node: the related node
     :type func: callable
     :param func: the function that will be called
