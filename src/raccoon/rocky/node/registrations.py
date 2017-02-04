@@ -6,13 +6,12 @@
 # :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
+import asyncio
 from functools import partial
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
 from autobahn.wamp.request import Subscription, Registration
 from autobahn.wamp.types import SubscribeOptions, RegisterOptions
-
-from . import utils
 
 
 REG_TYPE_CALL = 'call'
@@ -221,7 +220,7 @@ class RegistrationStore:
                 options=opts
             )
             coros.append(coro)
-        call_gathering = utils.gather(*coros,
+        call_gathering = asyncio.gather(*coros,
                                       loop=context.loop)
         regs = await call_gathering
         for ix, reg in enumerate(regs):
@@ -269,7 +268,7 @@ class RegistrationStore:
                     coros.append(coro)
 
         if coros:
-            call_gathering = utils.gather(*coros,
+            call_gathering = asyncio.gather(*coros,
                                           loop=context.loop)
             regs = await call_gathering
             for iy, reg in enumerate(regs):
@@ -326,5 +325,5 @@ class RegistrationStore:
                     self.expunge(item)
         if unregs:
             coros = set(item.unregister(session) for item in unregs)
-            gathering = utils.gather(*coros, loop=context.loop)
+            gathering = asyncio.gather(*coros, loop=context.loop)
             await gathering

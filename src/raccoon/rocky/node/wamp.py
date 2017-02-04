@@ -18,7 +18,6 @@ from metapensiero.signal import (ExternalSignallerAndHandler,
                                  SignalAndHandlerInitMeta)
 
 from .registrations import RegistrationStore, RPCPoint, REG_TYPE_CALL, REG_TYPE_SUB
-from . import utils
 
 
 NODE_INTERNAL_SIGNALS = (
@@ -346,7 +345,7 @@ class NodeWAMPManager:
             if asyncio.iscoroutine(res):
                 coros.append(res)
         if coros:
-            res = utils.gather(*coros, loop=src_point.node.node_context.loop)
+            res = asyncio.gather(*coros, loop=src_point.node.node_context.loop)
         else:
             res = src_point.node.node_context.loop.create_future()
             res.set_result(None)

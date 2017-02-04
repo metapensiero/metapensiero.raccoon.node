@@ -10,7 +10,6 @@ import pytest
 
 from unittest.mock import patch
 
-from metapensiero.asyncio import transaction
 from metapensiero.signal import Signal, handler
 from raccoon.rocky.node.context import WAMPNodeContext
 from raccoon.rocky.node.path import Path
@@ -34,15 +33,15 @@ class FakeNode(metaclass=WAMPInitMeta):
         self.node_path = path
         self.loop = context.loop
 
-    def node_register(self):
+    async def node_register(self):
         self.node_registered = True
-        self.on_node_register.notify(node=self,
-                                     context=self.node_context)
+        await self.on_node_register.notify(node=self,
+                                           context=self.node_context)
 
-    def node_unregister(self):
+    async def node_unregister(self):
         self.node_registered = False
-        self.on_node_unregister.notify(node=self,
-                                       context=self.node_context)
+        await self.on_node_unregister.notify(node=self,
+                                             context=self.node_context)
 
 AbstractWAMPNode.register(FakeNode)
 
@@ -67,10 +66,9 @@ async def test_register_and_call_rpc(wamp_context, event_loop):
     rpc_test = RPCTest(wamp_context, path)
 
     with patch.object(rpc_test, 'callme') as callme:
-        transaction.begin(event_loop)
-        rpc_test.node_register()
-        await transaction.wait(event_loop)
+        await rpc_test.node_register()
         wsess = wamp_context.wamp_session
+
 
         # This cannot be checked anymore because the handler is now a partial.
         # wsess.register.assert_called_with(
@@ -82,7 +80,6 @@ async def test_register_and_call_rpc(wamp_context, event_loop):
         await wsess.call(str(path.callme), 1, 'a', kw='foo')
         callme.assert_called_with(1, 'a', kw='foo',
                                   details=wsess.last_calldetails.return_value)
-        await transaction.end(event_loop)
 
 
 @pytest.mark.asyncio
@@ -106,10 +103,8 @@ async def test_subscriber_and_publisher(wamp_context, wamp_context2, event_loop)
     rpc_test2 = RPCTest2(wamp_context2, path2)
 
     with patch.object(rpc_test2, 'test_handler') as thandler:
-        transaction.begin(event_loop)
-        rpc_test.node_register()
-        rpc_test2.node_register()
-        await transaction.wait(event_loop)
+        await rpc_test.node_register()
+        await rpc_test2.node_register()
         wsess = wamp_context2.wamp_session
 
         # This cannot be checked anymore because the handler is now a partial.
@@ -118,8 +113,6 @@ async def test_subscriber_and_publisher(wamp_context, wamp_context2, event_loop)
         #     'raccoon.test.on_test_event',
         #     options=wsess.last_subscribe_opts.return_value
         # )
-        rpc_test.on_test_event.notify(1, 'a', kw='foo')
-        await transaction.wait(event_loop)
+        await rpc_test.on_test_event.notify(1, 'a', kw='foo')
         thandler.assert_called_with(1, 'a', kw='foo',
             details=wsess.last_publish_details.return_value)
-        await transaction.end(event_loop)

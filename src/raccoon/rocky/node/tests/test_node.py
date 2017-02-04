@@ -10,7 +10,6 @@ from unittest.mock import patch
 
 import pytest
 
-from metapensiero.asyncio import transaction
 from metapensiero.signal import Signal, handler
 
 from raccoon.rocky.node import context
@@ -33,20 +32,22 @@ async def test_node_basic(node_context, event_loop):
 
     path = Path('raccoon.test')
 
-    with patch.object(node, 'on_node_bind') as bind_event:
-        node.node_bind(path, node_context)
-        bind_event.notify.assert_called_with(node=node, path=path, parent=None,
-                                             run_async=True)
+    # with patch.object(node, 'on_node_bind') as bind_event:
+    #     await node.node_bind(path, node_context)
+    #     bind_event.notify.assert_called_with(node=node, path=path, parent=None,
+    #                                          run_async=True)
 
+    await node.node_bind(path, node_context)
     assert node.loop is node_context.loop
     assert node.node_root is node
     assert node.node_path is path
     assert node.node_context._parent_context is node_context
 
-    with patch.object(node, 'on_node_unbind') as unbind_event:
-        node.node_unbind()
-        unbind_event.notify.assert_called_with(node=node, path=path, parent=None)
+    # with patch.object(node, 'on_node_unbind') as unbind_event:
+    #     await node.node_unbind()
+    #     unbind_event.notify.assert_called_with(node=node, path=path, parent=None)
 
+    await node.node_unbind()
     assert node.loop is None
     assert node.node_root is node
     assert node.node_path is None
@@ -61,19 +62,20 @@ async def test_node_add(node_context):
 
     path = Path('raccoon.test')
 
-    n1.node_bind(path, node_context)
+    await n1.node_bind(path, node_context)
 
-    with patch.object(n1, 'on_node_add') as add_event:
-        n1.foo = n2
-        add_event.notify.assert_called_with(path=Path('raccoon.test.foo'),
-                                            node=n2)
+    # with patch.object(n1, 'on_node_add') as add_event:
+    #     await n1.node_add('foo', n2)
+    #     add_event.notify.assert_called_with(path=Path('raccoon.test.foo'),
+    #                                         node=n2)
 
+    await n1.node_add('foo', n2)
     assert n2.loop is node_context.loop
     assert n2.node_root is n1
     assert n2.node_path is Path('raccoon.test.foo')
     assert n2.node_context._parent_context is n1.node_context
 
-    del n1.foo
+    await n1.node_remove('foo')
 
     assert n2.loop is None
     assert n2.node_root is n2
@@ -99,11 +101,10 @@ async def test_call_method(wamp_context, event_loop):
     base = Path('raccoon')
     path = Path('test', base)
     path2 = Path('test2', base)
-    async with transaction.begin():
-        rpc_test = RPCTest()
-        rpc_test.node_bind(path, wamp_context)
-        rpc_test2 = RPCTest2()
-        rpc_test2.node_bind(path2, wamp_context)
+    rpc_test = RPCTest()
+    await rpc_test.node_bind(path, wamp_context)
+    rpc_test2 = RPCTest2()
+    await rpc_test2.node_bind(path2, wamp_context)
 
     res = await rpc_test2.bar()
     assert res == 6
@@ -127,11 +128,10 @@ async def test_proxy_call(wamp_context, event_loop):
     base = Path('raccoon')
     path = Path('test', base)
     path2 = Path('test2', base)
-    async with transaction.begin():
-        rpc_test = RPCTest()
-        rpc_test.node_bind(path, wamp_context)
-        rpc_test2 = RPCTest2()
-        rpc_test2.node_bind(path2, wamp_context)
+    rpc_test = RPCTest()
+    await rpc_test.node_bind(path, wamp_context)
+    rpc_test2 = RPCTest2()
+    await rpc_test2.node_bind(path2, wamp_context)
 
     res = await rpc_test2.bar()
     assert res == 6
@@ -161,17 +161,15 @@ async def test_node_unregister(wamp_context, event_loop):
     base = Path('raccoon')
     path = Path('test', base)
     path2 = Path('test2', base)
-    async with transaction.begin():
-        rpc_test = RPCTest()
-        rpc_test.node_bind(path, wamp_context)
-        rpc_test.sub = MySubNode()
-        rpc_test2 = RPCTest2()
-        rpc_test2.node_bind(path2, wamp_context)
+    rpc_test = RPCTest()
+    await rpc_test.node_bind(path, wamp_context)
+    await rpc_test.node_add('sub', MySubNode())
+    rpc_test2 = RPCTest2()
+    await rpc_test2.node_bind(path2, wamp_context)
 
     res = await rpc_test2.bar()
     assert res == 6
-    async with transaction.begin():
-        del rpc_test.sub
+    await rpc_test.node_remove('sub')
 
     with pytest.raises(Exception):
         res = await rpc_test2.bar()
@@ -215,15 +213,13 @@ async def test_proxy_handler(wamp_context, event_loop, events):
     base = Path('raccoon')
     path = Path('test', base)
     path2 = Path('test2', base)
-    async with transaction.begin():
-        rpc_test = RPCTest()
-        rpc_test.name = 'rpc_test'
-        rpc_test.node_bind(path, wamp_context)
-        rpc_test2 = RPCTest2()
-        rpc_test2.node_bind(path2, wamp_context)
+    rpc_test = RPCTest()
+    rpc_test.name = 'rpc_test'
+    await rpc_test.node_bind(path, wamp_context)
+    rpc_test2 = RPCTest2()
+    await rpc_test2.node_bind(path2, wamp_context)
 
-    async with transaction.begin():
-        await rpc_test.foo.notify()
+    await rpc_test.foo.notify()
 
     await events.wait_for(events.bar, 5)
     assert counter == 2
@@ -234,21 +230,17 @@ async def test_proxy_handler(wamp_context, event_loop, events):
     assert counter == 2
     events.reset()
     counter = 0
-    async with transaction.begin():
-        await rpc_test2.add_second_handler()
+    await rpc_test2.add_second_handler()
 
-    async with transaction.begin():
-        await rpc_test.foo.notify()
+    await rpc_test.foo.notify()
 
     await events.wait(timeout=5)
     assert counter == 3
     events.reset()
     counter = 0
-    async with transaction.begin():
-        await rpc_test2.remove_second_handler()
+    await rpc_test2.remove_second_handler()
 
-    async with transaction.begin():
-        await rpc_test.foo.notify()
+    await rpc_test.foo.notify()
 
     await events.wait(timeout=2)
     assert counter == 2
@@ -293,15 +285,13 @@ async def test_proxy_handler_two_sessions(wamp_context,  wamp_context2,
     base = Path('raccoon')
     path = Path('test', base)
     path2 = Path('test2', base)
-    async with transaction.begin():
-        rpc_test = RPCTest()
-        rpc_test.name = 'rpc_test'
-        rpc_test.node_bind(path, wamp_context)
-        rpc_test2 = RPCTest2()
-        rpc_test2.node_bind(path2, wamp_context2)
+    rpc_test = RPCTest()
+    rpc_test.name = 'rpc_test'
+    await rpc_test.node_bind(path, wamp_context)
+    rpc_test2 = RPCTest2()
+    await rpc_test2.node_bind(path2, wamp_context2)
 
-    async with transaction.begin():
-        await rpc_test.foo.notify()
+    await rpc_test.foo.notify()
 
     await events.wait_for(events.bar, 5)
     assert counter == 2
@@ -312,32 +302,28 @@ async def test_proxy_handler_two_sessions(wamp_context,  wamp_context2,
     assert counter == 2
     events.reset()
     counter = 0
-    async with transaction.begin():
-        await rpc_test2.add_second_handler()
+    await rpc_test2.add_second_handler()
 
-    async with transaction.begin():
-        await rpc_test.foo.notify()
+    await rpc_test.foo.notify()
 
     await events.wait(timeout=5)
     assert counter == 3
 
     events.reset()
     counter = 0
-    async with transaction.begin():
-        await rpc_test2.remove_second_handler()
+    await rpc_test2.remove_second_handler()
 
-    async with transaction.begin():
-        await rpc_test.foo.notify()
+    await rpc_test.foo.notify()
 
     await events.wait(timeout=2)
     assert counter == 2
 
-
-def test_node_unbind():
+@pytest.mark.asyncio
+async def test_node_unbind(node_context):
 
     nodes = []
     parent = Node()
-    parent.node_bind('root')
+    await parent.node_bind('root', node_context)
     nodes.append(parent)
 
     counter = 0
@@ -351,11 +337,12 @@ def test_node_unbind():
             n = Node()
             n.on_node_unbind.connect(on_unbind)
             name = 'n' + str(i) + str(y)
-            setattr(p, name, n)
+            await p.node_add(name, n)
             nodes.append(n)
 
     assert hasattr(parent, 'n20')
-    parent.node_unbind()
+
+    await parent.node_unbind()
     assert counter == 2 + 3 + 4
     assert not hasattr(parent, 'n20')
 
@@ -388,13 +375,11 @@ async def test_call_dot(wamp_context,  wamp_context2,
     base = Path('raccoon')
     path = Path('test', base)
     path2 = Path('test2', base)
-    async with transaction.begin() as t:
-        t.name = 'lele'
-        rpc_test = RPCTest()
-        rpc_test.name = 'rpc_test'
-        rpc_test.node_bind(path, wamp_context)
-        rpc_test2 = RPCTest2()
-        rpc_test2.node_bind(path2, wamp_context2)
+    rpc_test = RPCTest()
+    rpc_test.name = 'rpc_test'
+    await rpc_test.node_bind(path, wamp_context)
+    rpc_test2 = RPCTest2()
+    await rpc_test2.node_bind(path2, wamp_context2)
 
     res = await rpc_test2.call('@test')
     assert res == counter == 1
