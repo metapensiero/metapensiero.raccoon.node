@@ -24,5 +24,4 @@
    path
    proxy
    registrations
-   utils
    wamp
