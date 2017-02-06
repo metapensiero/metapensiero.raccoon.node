@@ -125,7 +125,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
 
     async def node_add(self, name, value):
         if not isinstance(value, Node):
-            raise NodeError("'%s' is not a Node", name)
+            raise NodeError("Expected a Node as '%s', got: %r" % (name, value))
         assert value.node_parent is None
         path = self.node_path + name
         await value.node_bind(path, self.node_context, parent=self)
