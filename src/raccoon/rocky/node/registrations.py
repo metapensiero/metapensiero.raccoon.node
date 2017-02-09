@@ -91,11 +91,11 @@ class StoreItem:
     def __repr__(self):
         return ("<{name} for '{uri}', type: '{type}', points: {points}, "
                 "regs: {regs}>".format(
-            name=self.__class__.__name__,
-            uri=self.uri, type=self.type,
-            points=len(self),
-            regs=len(self.regs)
-        ))
+                    name=self.__class__.__name__,
+                    uri=self.uri, type=self.type,
+                    points=len(self),
+                    regs=len(self.regs)
+                ))
 
     def add_point(self, node, func, is_source=False):
         if self.type == REG_TYPE_CALL and len(self) > 0:
