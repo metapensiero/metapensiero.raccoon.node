@@ -86,9 +86,9 @@ class Node(metaclass=SignalAndHandlerInitMeta):
                             "call `node_add()`", name)
         super().__setattr__(name, value)
 
-    def __str__(self):
-        return "%s instance at '%s'" % (self.__class__.__name__,
-                                        self.node_path)
+    def __repr__(self):
+        return "<%s instance at '%s'>" % (self.__class__.__name__,
+                                          self.node_path)
 
     async def _node_bind(self, path, context=None, parent=None):
         """`node_bind` alterable implementation."""
