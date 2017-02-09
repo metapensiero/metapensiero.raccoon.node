@@ -92,12 +92,12 @@ class Node(metaclass=SignalAndHandlerInitMeta):
 
     async def _node_bind(self, path, context=None, parent=None):
         """`node_bind` alterable implementation."""
-        if context and isinstance(context, NodeContext):
-            if not self.node_context:
+        if context is not None and isinstance(context, NodeContext):
+            if self.node_context is None:
                 self.node_context = context.new()
         self.node_path = Path(path)
         self.node_parent = parent
-        if parent and isinstance(parent, Node):
+        if parent is not None and isinstance(parent, Node):
             parent.on_node_unbind.connect(self._node_on_parent_unbind)
 
     async def _node_on_parent_unbind(self, **_):
@@ -113,15 +113,15 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     async def _node_unbind(self):
         """`node_unbind` alterable implementation"""
         del self.node_path
-        if self.node_context:
+        if self.node_context is not None:
             del self.node_context
-        if self.node_parent:
+        if self.node_parent is not None:
             del self.node_parent
 
     @property
     def loop(self):
         """Returns the asyncio loop for this node."""
-        return self.node_context.loop if self.node_context else None
+        return self.node_context.loop if self.node_context is not None else None
 
     async def node_add(self, name, value):
         if not isinstance(value, Node):
@@ -173,7 +173,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     @property
     def node_name(self):
         """Returns the name of this node, the last part of its path."""
-        return self.node_path._path[-1] if self.node_path else None
+        return self.node_path._path[-1] if self.node_path is not None else None
 
     async def node_remove(self, name):
         node = getattr(self, name, None)
@@ -188,7 +188,11 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     @property
     def node_root(self):
         """Returns the root of the tree."""
-        return self.node_parent.node_root if self.node_parent else self
+        if self.node_parent is not None:
+            res = self.node_parent.node_root
+        else:
+            res = self
+        return res
 
     async def node_unbind(self):
         """Unbinds a node from a path. It emits ``on_node_unbind`` event."""
@@ -244,12 +248,12 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
         automatically calls :meth:`node_register`.
         """
         await super()._node_bind(path, context, parent)
-        if parent and isinstance(parent, WAMPNode):
+        if parent is not None and isinstance(parent, WAMPNode):
             parent.on_node_register.connect(self._node_on_parent_register)
         await self.node_register()
 
     async def _node_on_parent_register(self, node, context):
-        if not self.node_context:
+        if self.node_context is None:
             self.node_context = context.new()
         await self.node_register()
 
@@ -276,8 +280,8 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
     async def node_register(self):
         """Register this node to the :term:`WAMP` session. It emits the
         :attr:`on_node_register` event."""
-        if not self.node_registered and self.node_context and \
-           self.node_context.wamp_session and \
+        if not self.node_registered and self.node_context is not None and \
+           self.node_context.wamp_session is not None and \
            self.node_context.wamp_session.is_attached():
             await self.on_node_register.notify(node=self,
                                                context=self.node_context)
