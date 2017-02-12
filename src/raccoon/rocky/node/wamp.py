@@ -135,7 +135,7 @@ class NodeWAMPManager:
             kw = kwargs.copy()
             if point.is_source:  # it is the signal
                 kw.pop('details', None)
-                logger.debug("Dispatching a WAMP event to '%s', args:"
+            logger.debug("Dispatching a WAMP event to '%s', args:"
                              "'%s', kw: '%s'", uri, args, kw)
             res = self._dispatch(uri, point.func, wrapper, args, kw)
             if res and asyncio.iscoroutine(res):
