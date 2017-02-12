@@ -97,7 +97,17 @@ class NodeWAMPManager:
             result = wrapper(uri, func, args, kwargs)
         else:
             try:
-                result = func(*args, **kwargs)
+                signature = inspect.signature(func, follow_wrapped=False)
+                has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD
+                                for n, p in signature.parameters.items())
+                if has_varkw:
+                    bind = signature.bind_partial(*args, **kwargs)
+                else:
+                    bind = signature.bind_partial(*args,
+                        **{k:v for k, v in kwargs.items() if k in
+                           signature.parameters})
+                bind.apply_defaults()
+                result = func(*bind.args, **bind.kwargs)
                 if inspect.isawaitable(result):
                     result = asyncio.ensure_future(result)
                     result.add_done_callback(
