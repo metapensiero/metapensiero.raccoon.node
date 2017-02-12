@@ -138,7 +138,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         parent. The context is cloned so that changes to it will affect only a
         branch.
 
-        It emits an ``on_node_bind`` *asynchronous* event with the following
+        It emits an ``on_node_bind`` *synchronous* event with the following
         keyword arguments:
 
         node : :class:`Node`
@@ -156,6 +156,15 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         :param context: an instance of the current context or ``None``.
         :type parent: an instance of :class:`Node`
         :param parent: a parent node or ``None``.
+
+        .. note:: This is now a *coroutine*
+
+          This whas changed from a normal method (with transaction tracking)
+          to a *coroutine*.
+
+          In reason of this the ``on_node_bind`` was changed to be
+          *synchronous*. This means that when this is complete, the
+          notification of the event is completed too.
         """
         assert len(path) > 0
         await self._node_bind(path, context, parent)
@@ -195,7 +204,14 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         return res
 
     async def node_unbind(self):
-        """Unbinds a node from a path. It emits ``on_node_unbind`` event."""
+        """Unbinds a node from a path. It emits ``on_node_unbind`` event, without
+        parameters.
+
+        .. note:: This is now a *coroutine*
+
+          This whas changed from a normal method (with transaction tracking)
+          to a *coroutine*.
+        """
         await self.on_node_unbind.notify(node=self,
                                          path=self.node_path,
                                          parent=self.node_parent)
