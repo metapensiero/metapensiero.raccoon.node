@@ -28,10 +28,10 @@ class NodeError(Exception):
 class Node(metaclass=SignalAndHandlerInitMeta):
     """The node is the base building block of Rocky.
     """
-    on_node_add = Signal()
+    on_node_add = Signal(sequential_async_handlers=True)
     "Signal emitted when a node is added by setting an attribute to it."
 
-    on_node_bind = Signal()
+    on_node_bind = Signal(sequential_async_handlers=True)
     """Signal emitted at the end of node_bind() call. Every callback will
     receive the following parameters:
 
