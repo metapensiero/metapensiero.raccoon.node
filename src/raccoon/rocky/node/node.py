@@ -81,7 +81,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
 
         It fires the :attr:`on_node_add` event.
         """
-        if isinstance(value, Node) and name != 'node_parent':
+        if (isinstance(value, Node) and name != 'node_parent' and
+            value.node_path is None):
             raise NodeError("Cannot add '%s'.To add a Node you must "
                             "call `node_add()`", name)
         super().__setattr__(name, value)
