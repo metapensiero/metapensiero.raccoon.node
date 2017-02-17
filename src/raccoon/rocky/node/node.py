@@ -70,8 +70,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         call :meth:`node_unbind` on it."""
         attr = getattr(self, name, None)
         if isinstance(attr, Node) and name != 'node_parent':
-            raise NodeError("Cannot remove '%s'.To remove a Node you must "
-                            "call `node_remove()`", name)
+            raise NodeError("Cannot remove '%s', call node_remove() instead"
+                            % name)
         super().__delattr__(name)
 
     def __setattr__(self, name, value):
@@ -83,13 +83,11 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         """
         if (isinstance(value, Node) and name != 'node_parent' and
             value.node_path is None):
-            raise NodeError("Cannot add '%s'.To add a Node you must "
-                            "call `node_add()`", name)
+            raise NodeError("Cannot add '%s', call node_add() instead" % name)
         super().__setattr__(name, value)
 
     def __repr__(self):
-        return "<%s instance at '%s'>" % (self.__class__.__name__,
-                                          self.node_path)
+        return "<%s at '%s'>" % (self.__class__.__name__, self.node_path)
 
     async def _node_bind(self, path, context=None, parent=None):
         """`node_bind` alterable implementation."""
@@ -188,10 +186,10 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     async def node_remove(self, name):
         node = getattr(self, name, None)
         if node is None:
-            raise NodeError("No node registered with name '%s' on %r", name,
-                            self)
+            raise NodeError("No node registered with name '%s' on %r"
+                            % (name, self))
         if not isinstance(node, Node):
-            raise NodeError("'%s' is not a Node", name)
+            raise NodeError("'%s' is not a Node" % name)
         if node.node_parent is self:
             await node.node_unbind()
 
