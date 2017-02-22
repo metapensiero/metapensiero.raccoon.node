@@ -419,11 +419,13 @@ class NodeWAMPManager:
                                                       '_wamp_calls')
 
         # filter handlers
+        new_wsubs = {}
         for hname, sig_name in handlers.items():
             if sig_name not in signals:
-                wsubs[hname] = sig_name
-        for hname in wsubs.keys():
+                new_wsubs[hname] = sig_name
+        for hname in new_wsubs.keys():
             del handlers[hname]
+        wsubs.update(new_wsubs)
 
         # find calls
         for aname, avalue in namespace.items():
