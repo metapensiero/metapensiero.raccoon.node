@@ -17,7 +17,8 @@ from autobahn.wamp.exception import ApplicationError as WAMPApplicationError
 from metapensiero.signal import (ExternalSignallerAndHandler,
                                  SignalAndHandlerInitMeta)
 
-from .registrations import RegistrationStore, RPCPoint, REG_TYPE_CALL, REG_TYPE_SUB
+from .registrations import (RegistrationStore, RPCPoint, REG_TYPE_CALL,
+                            REG_TYPE_SUB)
 
 
 NODE_INTERNAL_SIGNALS = (
