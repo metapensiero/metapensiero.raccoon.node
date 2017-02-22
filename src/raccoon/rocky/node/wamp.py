@@ -234,9 +234,14 @@ class NodeWAMPManager:
         # deal with subscriptions
         if len(subs_data) > 0:
             try:
-                sub_endpoints = self._build_instance_mapping(node, subs_data)
-                sub_endpoints = tuple((str(path.resolve(name)), func, False)
-                                      for name, func in sub_endpoints.items())
+                raw_endpoints = self._build_instance_mapping(node, subs_data)
+                sub_endpoints = []
+                for name, func in raw_endpoints.items():
+                    if name == '.':
+                        p = str(path)
+                    else:
+                        p = str(path.resolve(name))
+                    sub_endpoints.append((p, func, False))
                 await self.reg_store.add_subscription(node, context,
                                                       *sub_endpoints)
             except WAMPApplicationError:
