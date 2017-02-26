@@ -115,6 +115,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         if self.node_context is not None:
             del self.node_context
         if self.node_parent is not None:
+            self.node_parent.on_node_unbind.disconnect(self._node_on_parent_unbind)
             del self.node_parent
 
     @property
