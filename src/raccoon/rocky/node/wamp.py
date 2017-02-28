@@ -419,7 +419,10 @@ class NodeWAMPManager:
 
         Finally saves all the data on the class.
         """
-        assert issubclass(cls, AbstractWAMPNode)
+        if not issubclass(cls, AbstractWAMPNode):
+            logger.warning("Not registering class %s.%s as it doesn't implement "
+                           "AbstractWAMPNode", cls.__module__, cls.__name__)
+            return
         wsubs, wcalls = cls._build_inheritation_chain(bases,
                                                       '_wamp_subscriptions',
                                                       '_wamp_calls')
