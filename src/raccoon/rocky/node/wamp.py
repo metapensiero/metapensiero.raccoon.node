@@ -423,9 +423,9 @@ class NodeWAMPManager:
             logger.warning("Not registering class %s.%s as it doesn't implement "
                            "AbstractWAMPNode", cls.__module__, cls.__name__)
             return
-        wsubs, wcalls = cls._build_inheritation_chain(bases,
-                                                      '_wamp_subscriptions',
-                                                      '_wamp_calls')
+        wsubs, wcalls = cls._build_inheritance_chain(bases,
+                                                     '_wamp_subscriptions',
+                                                     '_wamp_calls')
 
         # filter handlers
         new_wsubs = {}
