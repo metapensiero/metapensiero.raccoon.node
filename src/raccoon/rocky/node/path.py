@@ -72,20 +72,6 @@ class Path(metaclass=PathMeta):
             base = Path(base)
         self.base = base
 
-    @property
-    def absolute(self):
-        return type(self)(self.path)
-
-    @property
-    def path(self):
-        """The absolute path, maybe the composition of the base path with the
-        *local* one."""
-        if self.base is not None and self.base is not self:
-            result = self.base.path + self._path
-        else:
-            result = self._path
-        return result
-
     def __add__(self, other):
         """Add a path with a string or tuple or two Path instances.
 
@@ -123,6 +109,33 @@ class Path(metaclass=PathMeta):
         return hash((self._path,
                      self.base if self.base is not self else None))
 
+    def __len__(self):
+        return len(self.path)
+
+    def __repr__(self):
+        return "<%s.%s for '%s'>" % (
+            type(self).__module__,
+            type(self).__name__,
+            str(self)
+        )
+
+    def __str__(self):
+        return PATHSEP.join(self.path)
+
+    @property
+    def absolute(self):
+        return type(self)(self.path)
+
+    @property
+    def path(self):
+        """The absolute path, maybe the composition of the base path with the
+        *local* one."""
+        if self.base is not None and self.base is not self:
+            result = self.base.path + self._path
+        else:
+            result = self._path
+        return result
+
     def resolve(self, path, context=None):
         """Resolve a potentially relative path into an absolute path.
 
@@ -156,21 +169,8 @@ class Path(metaclass=PathMeta):
         if out_path:
             res = type(self)(out_path)
         elif not out_path and INVALID_URI_CHARS.search(PATHSEP.join(path)):
-            raise PathError("Failed resolution of path '%s'" % \
+            raise PathError("Failed resolution of path '%s'" %
                             PATHSEP.join(path))
         else:
             res = type(self)(path)
         return res
-
-    def __str__(self):
-        return PATHSEP.join(self.path)
-
-    def __len__(self):
-        return len(self.path)
-
-    def __repr__(self):
-        return "<%s.%s for '%s'>" % (
-            type(self).__module__,
-            type(self).__name__,
-            str(self)
-        )
