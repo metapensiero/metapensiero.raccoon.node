@@ -115,7 +115,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         if self.node_context is not None:
             del self.node_context
         if self.node_parent is not None:
-            self.node_parent.on_node_unbind.disconnect(self._node_on_parent_unbind)
+            self.node_parent.on_node_unbind.disconnect(
+                self._node_on_parent_unbind)
             del self.node_parent
 
     @property
@@ -204,8 +205,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         return res
 
     async def node_unbind(self):
-        """Unbinds a node from a path. It emits ``on_node_unbind`` event, without
-        parameters.
+        """Unbinds a node from a path. It emits ``on_node_unbind`` event,
+        without parameters.
 
         .. note:: This is now a *coroutine*
 
@@ -311,5 +312,6 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
 
     def remote(self, path):
         return Proxy(self, path)
+
 
 AbstractWAMPNode.register(WAMPNode)
