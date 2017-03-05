@@ -110,6 +110,9 @@ class Path(metaclass=PathMeta):
                 raise PathError("Cannot add two paths with a base path")
         return type(self)(path, base)
 
+    def __eq__(self, other):
+        return norm_path(other, full=True) == norm_path(self, full=True)
+
     __getattr__ = __add__
 
     def __getitem__(self, index):
