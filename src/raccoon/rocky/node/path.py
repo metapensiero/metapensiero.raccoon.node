@@ -15,15 +15,23 @@ PATHSEP = '.'
 INVALID_URI_CHARS = re.compile('[^a-z0-9._*]', flags=re.ASCII)
 
 
-def norm_path(value):
+def norm_path(value, full=False):
+    """Return a normalized tuple of the value. If the value is a `Path` it
+    returns the possible relative path from the base or an absolute if
+    ``full`` is ``True``.
+    """
     if isinstance(value, Path):
-        value = value._path
+        normalized = value._path
+        if value.base is not None and full:
+            normalized = value.base._path + normalized
     else:
         if isinstance(value, abc.Sequence) and isinstance(value, str):
             value = value.split(PATHSEP)
         if not isinstance(value, tuple):
             value = tuple(value)
-    return value
+        normalized = value
+    return normalized
+
 
 
 class PathError(Exception):
@@ -65,6 +73,8 @@ class Path(metaclass=PathMeta):
     This helps especially when dealing with a notion of a *base* path and a
     *relative* one to it.
     """
+
+    base = None
 
     def __init__(self, path,  base=None):
         self._path = norm_path(path)
