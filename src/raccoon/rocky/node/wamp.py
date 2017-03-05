@@ -419,10 +419,6 @@ class NodeWAMPManager:
 
         Finally saves all the data on the class.
         """
-        if not issubclass(cls, AbstractWAMPNode):
-            logger.warning("Not registering class %s.%s as it doesn't implement "
-                           "AbstractWAMPNode", cls.__module__, cls.__name__)
-            return
         wsubs, wcalls = cls._build_inheritance_chain(bases,
                                                      '_wamp_subscriptions',
                                                      '_wamp_calls')
@@ -445,8 +441,12 @@ class NodeWAMPManager:
                 wcalls[aname] = aname
         # connect to signals
         # class is constructed already
-        cls.on_node_register.connect(self._on_node_register)
-        cls.on_node_unregister.connect(self._on_node_unregister)
+        if issubclass(cls, AbstractWAMPNode):
+            cls.on_node_register.connect(self._on_node_register)
+            cls.on_node_unregister.connect(self._on_node_unregister)
+        else:
+            logger.warning("Not registering class %s.%s as it doesn't implement"
+                           " AbstractWAMPNode", cls.__module__, cls.__name__)
         cls._wamp_subscriptions = wsubs
         cls._wamp_calls = wcalls
         logger.debug("Scanned class %s.%s for WAMP points, found "
