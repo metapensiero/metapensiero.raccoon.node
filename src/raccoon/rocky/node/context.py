@@ -39,6 +39,12 @@ class NodeContext:
             raise AttributeError
         return value
 
+    def __getitem__(self, item):
+        try:
+            return getattr(self, item)
+        except AttributeError:
+            raise KeyError(f"Ivalid key {item!r}")
+
     def __iter__(self):
         return iter(self.keys())
 
@@ -75,7 +81,11 @@ class NodeContext:
             raise ValueError("Already chained")
 
     def set(self, name, value):
+        assert isinstance(name, str)
         setattr(self, name, value)
+
+    def update(self, other):
+        self.__dict__.update(other)
 
 
 class WAMPNodeContext(NodeContext):

@@ -241,7 +241,7 @@ class NodeWAMPManager:
                     if name == '.':
                         p = str(path)
                     else:
-                        p = str(path.resolve(name))
+                        p = str(path.resolve(name, context))
                     sub_endpoints.append((p, func, False))
                 await self.reg_store.add_subscription(node, context,
                                                       *sub_endpoints)
