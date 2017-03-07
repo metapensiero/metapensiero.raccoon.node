@@ -89,6 +89,9 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     def __repr__(self):
         return "<%s at '%s'>" % (self.__class__.__name__, self.node_path)
 
+    async def _node_after_bind(self, path, context=None, parent=None):
+        pass
+
     async def _node_bind(self, path, context=None, parent=None):
         """`node_bind` alterable implementation."""
         if context is not None and isinstance(context, NodeContext):
@@ -169,6 +172,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         """
         assert len(path) > 0
         await self._node_bind(path, context, parent)
+        await self._node_after_bind(path, context, parent)
         await self.on_node_bind.notify(node=self,
                                        path=self.node_path,
                                        parent=self.node_parent)
@@ -259,12 +263,12 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
     two keywords, ``node`` and ``context``.
     """
 
-    async def _node_bind(self, path, context=None, parent=None):
+    async def _node_after_bind(self, path, context=None, parent=None):
         """Specialized to attach this node to the parent's
         :attr:`on_node_register` and :attr:`on_node_unbind` signals. It
         automatically calls :meth:`node_register`.
         """
-        await super()._node_bind(path, context, parent)
+        await super()._node_after_bind(path, context, parent)
         if parent is not None and isinstance(parent, WAMPNode):
             parent.on_node_register.connect(self._node_on_parent_register)
         await self.node_register()
