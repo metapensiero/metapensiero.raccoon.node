@@ -58,8 +58,8 @@ class RPCPoint(metaclass=RPCPointMeta):
         return hash(self._key)
 
     def __repr__(self):
-        return "<{} for node '{}' and func '{}'>".format(
-            self.__class__.__name__, self.node, self.func
+        return "<{} for node '{}' and func '{}', is source: '{}'>".format(
+            self.__class__.__name__, self.node, self.func, self.is_source
         )
 
 
