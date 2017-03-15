@@ -419,18 +419,8 @@ class NodeWAMPManager:
 
         Finally saves all the data on the class.
         """
-        wsubs, wcalls = cls._build_inheritance_chain(bases,
-                                                     '_wamp_subscriptions',
-                                                     '_wamp_calls')
-
-        # filter handlers
-        new_wsubs = {}
-        for hname, sig_name in handlers.items():
-            if sig_name not in signals:
-                new_wsubs[hname] = sig_name
-        for hname in new_wsubs.keys():
-            del handlers[hname]
-        wsubs.update(new_wsubs)
+        wsubs, wcalls = cls._build_inheritance_chain(
+            bases, '_wamp_subscriptions', '_wamp_calls', merge=True)
 
         # find calls
         for aname, avalue in namespace.items():
@@ -439,9 +429,18 @@ class NodeWAMPManager:
                 wcalls[aname] = call_name
             elif call_name is None:
                 wcalls[aname] = aname
+
         # connect to signals
         # class is constructed already
         if issubclass(cls, AbstractWAMPNode):
+            # filter handlers
+            new_wsubs = {}
+            for hname, sig_name in handlers.items():
+                if sig_name not in signals:
+                    new_wsubs[hname] = sig_name
+            for hname in new_wsubs.keys():
+                del handlers[hname]
+            wsubs.update(new_wsubs)
             cls.on_node_register.connect(self._on_node_register)
             cls.on_node_unregister.connect(self._on_node_unregister)
         else:
