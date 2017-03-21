@@ -111,6 +111,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
             if v is child:
                 break
         del self.__dict__[k]
+        return k
 
     async def _node_unbind(self):
         """`node_unbind` alterable implementation"""
