@@ -61,6 +61,19 @@ class AbstractWAMPNode(metaclass=ABCMeta):
         return result
 
 
+def _log(message, *args, **kw):
+    from pprint import pformat
+    from textwrap import indent
+
+    if args:
+        message = message % args
+    for name, value in kw.items():
+        if value:
+            s = indent(pformat(value, width=160), '    ')
+            message += '\n  %s:\n%s' % (name, s)
+    logger.debug(message)
+
+
 class NodeWAMPManager:
     """Hooks up into ``metapensiero.signal`` machinery and registers itself
     to handle :term:`WAMP` setup.
@@ -136,8 +149,8 @@ class NodeWAMPManager:
             kw = kwargs.copy()
             if point.is_source:  # it is the signal
                 kw.pop('details', None)
-            logger.debug("Dispatching a WAMP event to '%s', args:"
-                             "'%s', kw: '%s'", uri, args, kw)
+            if logger.isEnabledFor(logging.DEBUG):
+                _log("Dispatching WAMP event", uri=uri, args=args, kwargs=kw)
             res = self._dispatch(uri, point.func, wrapper, args, kw)
             if res and asyncio.iscoroutine(res):
                 results.append(res)
@@ -156,8 +169,8 @@ class NodeWAMPManager:
                                    # than one endpoint
         point = tuple(reg_item.points)[0]
         wrapper = point.node.node_context.call_wrapper
-        logger.debug("Dispatching a WAMP call to '%s', args: '%s', kw: '%s'",
-                     uri, args, kwargs)
+        if logger.isEnabledFor(logging.DEBUG):
+            _log("Dispatching WAMP call", uri=uri, args=args, kwargs=kwargs)
         # autobahn's txaio will take care of it if it's a coroutine
         return self._dispatch(uri, point.func, wrapper, args, kwargs)
 
@@ -342,8 +355,8 @@ class NodeWAMPManager:
         str_path = str(path)
         item = self.reg_store.get(str_path, REG_TYPE_SUB)
         session = src_point.node.node_context.wamp_session
-        logger.debug("Publishing to WAMP topic at '%s', args: '%s', kw:"
-                     " '%s'", str_path, args, kwargs)
+        if logger.isEnabledFor(logging.DEBUG):
+            _log("Publishing to WAMP", path=str_path, args=args, kwargs=kwargs)
         if len(item) > 0 and session in item.regs:
             details = {'topic': str_path, 'publisher': 'local'}
             disp = self._dispatch_event(session, src_point, str_path, *args,
