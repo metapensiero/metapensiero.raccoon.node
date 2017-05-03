@@ -10,10 +10,25 @@ import asyncio
 from unittest import mock
 
 import pytest
-from autobahn.wamp.types import CallDetails, EventDetails
 
 from raccoon.rocky.node import context
 from raccoon.rocky.node.wamp import node_wamp_manager
+
+
+class FakeCallDetails:
+    def __init__(self, progress, caller, caller_authid, procedure):
+        self.progress = progress
+        self.caller = caller
+        self.caller_authid = caller_authid
+        self.procedure = procedure
+
+
+class FakeEventDetails:
+    def __init__(self, publication, publisher, publisher_authid, topic):
+        self.publication = publication
+        self.publisher = publisher
+        self.publisher_authid = publisher_authid
+        self.topic = topic
 
 
 class FakeRegistration:
@@ -83,10 +98,10 @@ def create_fake_session(global_registry, event_loop):
     def dispatch_publish(topic, *args, **kwargs):
         subscribers = registered_handlers.get(topic)
         if subscribers:
-            edetails = EventDetails(87654321, # publication id
-                                    publisher=12345678,
-                                    publisher_authid='mock_publisher',
-                                    topic=topic)
+            edetails = FakeEventDetails(87654321, # publication id
+                                        publisher=12345678,
+                                        publisher_authid='mock_publisher',
+                                        topic=topic)
             fake_session.last_publish_details.return_value = edetails
             for handler in subscribers:
                 # always add publisher's data as if the publisher specified
@@ -117,9 +132,9 @@ def create_fake_session(global_registry, event_loop):
                 chosen = registered_procs[chosen]['func']
         if chosen and callable(chosen):
             # always inject calldetails into the "details" kw
-            call_details = CallDetails(progress=None, caller=12345678,
-                                       caller_authid='mock_caller',
-                                       procedure=name)
+            call_details = FakeCallDetails(progress=None, caller=12345678,
+                                           caller_authid='mock_caller',
+                                           procedure=name)
 
             result = chosen(*args, details=call_details, **kwargs)
             if asyncio.iscoroutine(result):
