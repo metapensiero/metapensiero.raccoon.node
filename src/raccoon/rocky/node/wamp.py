@@ -150,7 +150,8 @@ class NodeWAMPManager:
             if point.is_source:  # it is the signal
                 kw.pop('details', None)
             if logger.isEnabledFor(logging.DEBUG):
-                _log("Dispatching WAMP event", uri=uri, args=args, kwargs=kw)
+                _log("Dispatching WAMP event", to=point, uri=uri, args=args,
+                     kwargs=kw)
             res = self._dispatch(uri, point.func, wrapper, args, kw)
             if res and asyncio.iscoroutine(res):
                 results.append(res)
