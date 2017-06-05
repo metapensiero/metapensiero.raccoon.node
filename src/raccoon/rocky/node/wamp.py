@@ -8,8 +8,8 @@
 
 from abc import ABCMeta, abstractmethod
 import asyncio
-import functools
 import inspect
+import itertools
 import logging
 
 from autobahn.wamp.types import SubscribeOptions, RegisterOptions
@@ -19,6 +19,7 @@ from metapensiero.signal import (ExternalSignallerAndHandler,
 
 from .registrations import (RegistrationStore, RPCPoint, REG_TYPE_CALL,
                             REG_TYPE_SUB)
+from . import serialize
 
 
 NODE_INTERNAL_SIGNALS = (
@@ -94,14 +95,43 @@ class NodeWAMPManager:
                 node.node_context.wamp_session.is_attached()):
             raise RPCError('WAMP session is not initialized properly')
 
-    def _pull_errors(self, uri, future):
-        """Get the value of an awaitable result returned by dispatch, just to
-        make visible possible errors."""
-        try:
-            future.result()
-        except:
-            logger.exception("Error while dispatching for '%s'", uri)
-            raise
+    async def _complete_coros(self, results, coros, serialize=False):
+        """Wait for the completion of the coros and return both non-coro results
+        and coro-results together. perform serialization if requested."""
+        if len(coros):
+            cresults = await asyncio.gather(*coros)
+        else:
+            cresults = ()
+        if serialize:
+            return tuple((serialize.serialize(v) if
+                          isinstance(v, serialize.Serializable) else v)
+                         for v  in itertools.chain(results, cresults))
+        else:
+            return (*results, *cresults)
+
+    def _deserialize(self, args, kwargs):
+        """Called to deserialize any `Serialized` value."""
+        return (tuple((serialize.deserialize(v)
+                       if isinstance(v, serialize.Serialized) else v)
+                      for v in args),
+                {k: (serialize.deserialize(v) if
+                     isinstance(v, serialize.Serialized) else v)
+                   for k, v in kwargs.items()})
+
+    async def _deserialize_result(self, in_result):
+        """Deserialize a scalar result or a tuple of results coming from
+        :term:`WAMP` calls."""
+        if inspect.isawaitable(in_result):
+            in_result = await in_result
+        if isinstance(in_result, (tuple, list)):
+            return type(in_result)(
+                (serialize.deserialize(v)
+                 if isinstance(v, serialize.Serialized) else v)
+                for v in in_result)
+        else:
+            return (serialize.deserialize(in_result)
+                    if isinstance(in_result, serialize.Serialized) else
+                    in_result)
 
     def _dispatch(self, uri, func, wrapper, args, kwargs):
         """Do the real dispatch."""
@@ -122,27 +152,32 @@ class NodeWAMPManager:
                            signature.parameters})
                 bind.apply_defaults()
                 result = func(*bind.args, **bind.kwargs)
-                if inspect.isawaitable(result):
-                    result = asyncio.ensure_future(result)
-                    result.add_done_callback(
-                        functools.partial(self._pull_errors, uri))
             except:
                 logger.exception("Error while dispatching for '%s'", uri)
                 raise
         return result
 
-    def _dispatch_event(self, src_session, src_point, uri, *args, **kwargs):
+    def _dispatch_event(self, src_session, src_point, uri, *args, __local=False,
+                        **kwargs):
         """Dispatch an event to the right endpoint.
         """
         reg_item = self.reg_store.get(uri, REG_TYPE_SUB)
         results = []
+        coros = []
+        if not __local:
+            args, kwargs = self._deserialize(args, kwargs)
+        # the case of event dispatchment is a bit more complex than the
+        # procedure dispatch, this is because ther can be multiple endpoints
+        # per session, but they don't get called by autobahn if the source of
+        # the event is registered on the same session
+        ndispatches = 0
         for point in reg_item.points:
             # skip destinations registered for sessions different than the
             # reference one, as this method will be called one time per
             # session
             if point.session is not src_session:
                 continue
-            # skip destination equal to the src_session, if any
+            # skip destination equal to the src_point
             if src_point and point is src_point:
                 continue
             wrapper = point.node.node_context.subscription_wrapper
@@ -153,16 +188,29 @@ class NodeWAMPManager:
                 _log("Dispatching WAMP event", to=point, uri=uri, args=args,
                      kwargs=kw)
             res = self._dispatch(uri, point.func, wrapper, args, kw)
-            if res and asyncio.iscoroutine(res):
-                results.append(res)
-        # autobahn's txaio will take care of it if it's a coroutine
-        if len(results) == 1:
+            if res is not None:
+                ndispatches += 1
+                if inspect.isawaitable(res):
+                    coros.append(res)
+                else:
+                    results.append(res)
+        # here the logic is that the caller is interested in the result only
+        # if __local is True (i.e. it has been called by notify) but in that
+        # case a serialization is not needed. The only important thing is to
+        # ensure that if a result is a coroutine, it will be properly
+        # recognized by the caller and therefore it will wait on it.
+        if ndispatches == 1 and len(results) == 1:
             return results[0]
-        elif len(results) > 1:
-            return asyncio.gather(*results)  # WARN: it's impossible to define
-                                             # a loop here
+        elif ndispatches == 1 and len(results) == 0:
+            # autobahn's txaio will take care of it
+            return coros[0]
+        elif ndispatches > 1 and len(coros):
+            return self._complete_coros(results, coros)
+        else:
+            return results
 
-    def _dispatch_procedure(self, src_session, uri, *args, **kwargs):
+    def _dispatch_procedure(self, src_session, uri, *args, __local=False,
+                            **kwargs):
         """Dispatch a call from :term:`WAMP` to the right endpoint.
         """
         reg_item = self.reg_store.get(uri, REG_TYPE_CALL)
@@ -172,8 +220,12 @@ class NodeWAMPManager:
         wrapper = point.node.node_context.call_wrapper
         if logger.isEnabledFor(logging.DEBUG):
             _log("Dispatching WAMP call", uri=uri, args=args, kwargs=kwargs)
-        # autobahn's txaio will take care of it if it's a coroutine
-        return self._dispatch(uri, point.func, wrapper, args, kwargs)
+        if __local:
+            return self._self._dispatch(uri, point.func, wrapper, args, kwargs)
+        else:
+            arg, kwargs = self._deserialize(args, kwargs)
+            return self._serialize_result(
+                self._dispatch(uri, point.func, wrapper, args, kwargs))
 
     async def _on_node_register(self, node, context):
         """It's an handler registered at class registration time. It works on
@@ -280,13 +332,37 @@ class NodeWAMPManager:
                              node)
         logger.debug("Completed unregistration of: %s", node)
 
+    def _serialize(self, args, kwargs):
+        """Called to serialize any serializable value."""
+        return (tuple((serialize.serialize(v) if
+                       isinstance(v, serialize.Serializable) else v)
+                      for v  in args),
+                {k: (serialize.serialize(v) if
+                     isinstance(v, serialize.Serializable) else v)
+                   for k, v in kwargs.items()})
+
+    async def _serialize_result(self, in_result):
+        """Deserialize a scalar result or a tuple of results coming from
+        :term:`WAMP` calls."""
+        if inspect.isawaitable(in_result):
+            in_result = await in_result
+        if isinstance(in_result, (tuple, list)):
+            return type(in_result)(
+                (serialize.serialize(v) if
+                 isinstance(v, serialize.Serializable) else v)
+                for v in in_result)
+        else:
+            return (serialize.serialize(in_result)
+                    if isinstance(in_result, serialize.Serializable) else
+                    in_result)
+
     def call(self, node, path, *args, **kwargs):
         """Call another RPC endpoint published via :term:`WAMP`.
 
         .. important::
           The ``disclose_me=True`` option (was the default in old
           ``raccoon.api`` framework) is now managed directly by
-          crossbar in it's realm/role configuration.
+          crossbar in its realm/role configuration.
 
         .. note::
           this isn't a coroutine but it returns one.
@@ -300,10 +376,13 @@ class NodeWAMPManager:
         if len(item) > 0 and session in item.regs:
             details = {'procedure': str_path, 'caller': 'local'}
             result = self._dispatch_procedure(session, str_path, *args,
-                                              details=details, **kwargs)
+                                              details=details, __local=True,
+                                              **kwargs)
         else:
+            args, kwargs = self._serialize(args, kwargs)
             result = node.node_context.wamp_session.call(
                 str_path, *args, **kwargs)
+            result = self._deserialize_result(result)
         if not inspect.isawaitable(result):
             fut = node.loop.create_future()
             fut.set_result(result)
@@ -361,20 +440,23 @@ class NodeWAMPManager:
         if len(item) > 0 and session in item.regs:
             details = {'topic': str_path, 'publisher': 'local'}
             disp = self._dispatch_event(session, src_point, str_path, *args,
-                                        details=details, **kwargs)
+                                        details=details, __local=True, **kwargs)
         else:
             disp = None
         wrapper = src_point.node.node_context.publication_wrapper
+        args, kwargs = self._serialize(args, kwargs)
         if callable(wrapper):
             publication = wrapper(src_point, str_path, args, kwargs)
         else:
             publication = session.publish(str_path, *args, **kwargs)
 
         coros = []
-        for res in [disp, publication]:
-            if asyncio.iscoroutine(res):
+        for res in (disp, publication):
+            if inspect.isawaitable(res):
                 coros.append(res)
-        if coros:
+        if len(coros) == 1:
+            res = coros[0]
+        elif len(coros) > 1:
             res = asyncio.gather(*coros, loop=src_point.node.node_context.loop)
         else:
             res = src_point.node.node_context.loop.create_future()
@@ -523,5 +605,6 @@ class CallNameDecorator(metaclass=CallDecoMeta):
                 if spec['kind'] == 'call':
                     call_name = spec['name']
         return call_name
+
 
 call = CallNameDecorator
