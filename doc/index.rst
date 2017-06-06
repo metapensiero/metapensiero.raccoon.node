@@ -24,4 +24,5 @@
    path
    proxy
    registrations
+   serialize
    wamp
