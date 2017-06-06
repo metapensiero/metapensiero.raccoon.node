@@ -6,7 +6,6 @@
 # :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
-import inspect
 import logging
 
 from metapensiero.signal import (Signal, SignalAndHandlerInitMeta)
@@ -15,6 +14,8 @@ from .context import NodeContext
 from .path import Path
 from .proxy import Proxy
 from .wamp import WAMPInitMeta, AbstractWAMPNode
+from . import serialize
+
 
 _undefined = object()
 
@@ -178,6 +179,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
                                        path=self.node_path,
                                        parent=self.node_parent)
 
+
     def node_child_on_unbind(self, node, path, parent):
         """Called when a child node unbind itself, by default it will remove
         the attribute reference on it.
@@ -224,7 +226,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         await self._node_unbind()
 
 
-class WAMPNode(Node, metaclass=WAMPInitMeta):
+@serialize.define('raccoon.node.WAMPNode', allow_subclasses=True)
+class WAMPNode(Node, serialize.Serializable, metaclass=WAMPInitMeta):
     """A Node subclass to deal with WAMP stuff. An instance gets
     local and WAMP pub/sub, WAMP RPC and automatic tree addressing.
 
@@ -299,6 +302,11 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
         """
         return self.__class__.manager.call(self, path, *args, **kwargs)
 
+    @classmethod
+    def node_deserialize(cls, endpoint_node, serialized):
+        value = serialized.Serialized.get_value(serialized)
+        return endpoint_node.remote(value)
+
     async def node_register(self):
         """Register this node to the :term:`WAMP` session. It emits the
         :attr:`on_node_register` event."""
@@ -307,6 +315,14 @@ class WAMPNode(Node, metaclass=WAMPInitMeta):
            self.node_context.wamp_session.is_attached():
             await self.on_node_register.notify(node=self,
                                                context=self.node_context)
+
+    @classmethod
+    def node_serialize(cls, srcpoint_node, instance):
+        if instance.node_path is None:
+            raise serialize.SerializationError(
+                "This instance cannot be serialized"
+            )
+        return serialize.Serialized(str(instance.node_path))
 
     async def node_unregister(self):
         """Unregisters the node from the :term:`WAMP` session. It emits the

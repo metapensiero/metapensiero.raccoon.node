@@ -10,6 +10,8 @@ from collections import abc
 import re
 from weakref import WeakValueDictionary
 
+from . import serialize
+
 
 PATHSEP = '.'
 INVALID_URI_CHARS = re.compile('[^a-z0-9._*]', flags=re.ASCII)
@@ -38,7 +40,7 @@ class PathError(Exception):
     """Error raised during path operations"""
 
 
-class PathMeta(type):
+class PathMeta(type(serialize.Serializable)):
 
     REGISTRY = WeakValueDictionary()
 
@@ -64,7 +66,8 @@ class PathMeta(type):
         return result
 
 
-class Path(metaclass=PathMeta):
+@serialize.define('raccoon.node.Path')
+class Path(serialize.Serializable, metaclass=PathMeta):
     """Helper used to resolve call, subscribe and publish paths.
 
     :param path: either a *dotted* string or a tuple of fragments
@@ -138,6 +141,17 @@ class Path(metaclass=PathMeta):
     @property
     def absolute(self):
         return type(self)(self.path)
+
+    @classmethod
+    def node_deserialize(cls, endpoint_node, serialized):
+        value = serialize.Serialized.get_value()
+        return cls(**value)
+
+    @classmethod
+    def node_serialize(cls, srcpoint_node, instance):
+        return serialize.Serialized(
+            {'path': instance._path,
+             'base': instance.base.path if instance.base is not None else None})
 
     @property
     def path(self):
