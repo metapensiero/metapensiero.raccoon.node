@@ -219,20 +219,20 @@ async def test_proxy_handler(wamp_context, event_loop, events):
     rpc_test2 = RPCTest2()
     await rpc_test2.node_bind(path2, wamp_context)
 
-    await rpc_test.foo.notify()
+    await rpc_test.foo.notify(awaitable=True)
 
     await events.wait_for(events.bar, 5)
     assert counter == 2
     events.reset()
     counter = 0
-    rpc_test2.remote('@test').foo.notify()
+    rpc_test2.remote('@test').foo.notify(awaitable=True)
     await events.wait_for(events.bar, 5)
     assert counter == 2
     events.reset()
     counter = 0
     await rpc_test2.add_second_handler()
 
-    await rpc_test.foo.notify()
+    await rpc_test.foo.notify(awaitable=True)
 
     await events.wait(timeout=5)
     assert counter == 3
@@ -240,7 +240,7 @@ async def test_proxy_handler(wamp_context, event_loop, events):
     counter = 0
     await rpc_test2.remove_second_handler()
 
-    await rpc_test.foo.notify()
+    await rpc_test.foo.notify(awaitable=True)
 
     await events.wait(timeout=2)
     assert counter == 2
@@ -291,7 +291,7 @@ async def test_proxy_handler_two_sessions(wamp_context,  wamp_context2,
     rpc_test2 = RPCTest2()
     await rpc_test2.node_bind(path2, wamp_context2)
 
-    await rpc_test.foo.notify()
+    await rpc_test.foo.notify(awaitable=True)
 
     await events.wait_for(events.bar, 5)
     assert counter == 2
@@ -304,7 +304,7 @@ async def test_proxy_handler_two_sessions(wamp_context,  wamp_context2,
     counter = 0
     await rpc_test2.add_second_handler()
 
-    await rpc_test.foo.notify()
+    await rpc_test.foo.notify(awaitable=True)
 
     await events.wait(timeout=5)
     assert counter == 3
@@ -313,7 +313,7 @@ async def test_proxy_handler_two_sessions(wamp_context,  wamp_context2,
     counter = 0
     await rpc_test2.remove_second_handler()
 
-    await rpc_test.foo.notify()
+    await rpc_test.foo.notify(awaitable=True)
 
     await events.wait(timeout=2)
     assert counter == 2
@@ -383,8 +383,8 @@ async def test_call_dot(wamp_context,  wamp_context2,
 
     res = await rpc_test2.call('@test')
     assert res == counter == 1
-    await rpc_test.foo.notify()
+    await rpc_test.foo.notify(awaitable=True)
     assert events.me_handler.is_set()
     events.me_handler.clear()
-    await rpc_test2.remote('@test').notify()
+    await rpc_test2.remote('@test').notify(awaitable=True)
     assert events.me_handler.is_set()
