@@ -12,131 +12,82 @@ import sys
 NODE_SERIALIZIED_ID_KEY = "__node_id__"
 NODE_SERIALIZIED_VALUE_KEY = "__node_value__"
 NODE_SERIALIZATION_CLASS_KEY = "_node_serialization_id"
-REGISTRY = {}
 
 
 class SerializationError(Exception):
     """Error raised during (De)Serialization."""
 
 
-class Registry:
-    """A registry of serialization definitions indexed by *serialization_id* and
-    *class*. An instance of this class is exported in place of the whole module
-    for easier fruition."""
-
-    def __init__(self):
-        self._id_to_definition = {}
-        self._cls_to_definition = {}
-        self.Serializable = Serializable
-        self.Serialized = Serialized
-        self.define = SerializationDefinition
-
-    def add_registration(self, definition):
-        """Add a definition to the registry. This is automatically called by each
-        definition instance.
-
-        :param definition: an instance of `SerializationDefinition`
-        """
-        assert (definition.serialization_id is not None and
-                isinstance(definition.serialization_id, str))
-        if definition.serialization_id in self._id_to_definition:
-            raise SerializationError(f"The id '{self.serialization_id}' is taken "
-                                     f"already")
-        assert definition.cls is not None
-        if definition.cls in self._cls_to_definition:
-            raise SerializationError(f"Class {definition.cls.__name__} is "
-                                     f"already registered")
-
-        self._id_to_definition[definition.serialization_id] = definition
-        self._cls_to_definition[definition.cls] = definition
-
-    def serialize(self, instance):
-        """Called by node machinery to serialize an instance before sending it
-        remotely.
-
-        :param instance: an instance to serialize. Should be and instance of a
-          `Serializable` subclass
-        :returns: an instance of `Serialized`
-        :raises SerializationError: if a meatching serialization definition
-          cannot be found
-        """
-        cls = type(instance)
-        definition = None
-        if cls in self._cls_to_definition:
-            definition = self._cls_to_definition[cls]
-        elif hasattr(instance, NODE_SERIALIZATION_CLASS_KEY):
-            serialization_id = getattr(instance, NODE_SERIALIZATION_CLASS_KEY)
-            if serialization_id in self._id_to_definition:
-                definition = self._id_to_definition[serialization_id]
-        if definition is None:
-            raise SerializationError(f"Don't  know how to serialize {instance!r}")
-        return definition.serializer.node_serialize(instance)
-
-    def deserialize(self, serialized):
-        """Called by node machinery to deserialize a value upon reception.
-
-        :param serialized: an instance of `Serialized`
-        :returns: anything suitable
-        :raises SerializationError: if a matching definition cannot be found
-        """
-        if not isinstance(serialized, self.Serialized):
-            raise SerializationError(f"{serialized!r} is not a valid "
-                                     f"serializied value")
-        definition = self._id_to_definition.get(
-            serialized[NODE_SERIALIZIED_ID_KEY])
-        if definition is None:
-            raise SerializationError(f"Don't  know how to deserialize "
-                                     f"{serialized!r}")
-        return definition.serializer.node_deserialize(
-            serialized[NODE_SERIALIZIED_VALUE_KEY]
-        )
-
-
 class Serializable(metaclass=abc.ABCMeta):
-    """A class that node knows how to serialize."""
+    """An abstract class which exposes the api that the class whose instances
+    should be serialized should expose."""
 
     @abc.abstractmethod
-    def node_serialize(self, instance):
+    def node_serialize(self, node, instance):
         """Called by the node infrastructure to have the one instance of the
         class serialized.
 
+        :param src_node: the `Node` node that generated the `instance` that has
+          to be serialized
         :param instance: An instance of the type to serialize
         :returns: An instance of the `Serialized` class
         :raises SerializationError: if it's unable to serialize the instance
         """
 
     @abc.abstractmethod
-    def node_deserialize(self, serialized):
+    def node_deserialize(self, end_node, serialized):
         """Called by the node infrastructure to have a serialized state of an instance
         reconverted. I isn't enforced that the returned value is an instance
         of the managed class, it can be anything suitable.
 
+        :param end_node: the `Node` instance to which the deserialized value
+          will be submitted
         :param serialized: An instance of the `Serialized` class
         :returns: anything suitable to rephresent the serialized value.
         :raises SerializationError: if it's unable to deserialize the value
+
         """
 
 class SerializedMeta(type):
+    """Metaclass for the `Serialized` class, it is used to dynamically check if an
+    instance of ``dict`` is also an instance of `Serialized`.
+    """
 
     def __instancecheck__(self, instance):
         return (isinstance(instance, dict) and
                 NODE_SERIALIZIED_ID_KEY in instance and
                 NODE_SERIALIZIED_VALUE_KEY in instance and
                 len(instance) == 2)
+
+    "The ``serialization_id`` key name"
     id_key = NODE_SERIALIZIED_ID_KEY
+    "The serialized value key name"
     value_key = NODE_SERIALIZIED_VALUE_KEY
+
+    def get_id(cls, instance, default=None):
+        """Given a ``dict`` which is also a `Serialized`, return the
+        ``serialization_id`` contained."""
+        return instance.get(cls.id_key, default)
+
+    def get_value(cls, instance, default=None):
+        """Given a ``dict`` which is also a `Serialized`, return the
+        ``value`` contained."""
+        return instance.get(cls.value_key, default)
 
 
 class Serialized(dict, metaclass=SerializedMeta):
-    """Rephresents a serialzed value. It dynamically checks if any instance of
-    ``dict`` is a suitable instance of this class with normal ``isinstance(foo,
-    Serialized)`` call.
+    """Rephresents a serialzed value. It is just a ``dict`` configured to have
+    just a pair of entries, one for the ``serialization_id`` and the other for
+    the serialized rephresentation. It dynamically checks if any instance of
+    ``dict`` is a suitable instance of this class with normal
+    ``isinstance(foo, Serialized)`` call.
 
-    :param str serialization_id: a string identifying the serialized state
     :param value: a serialized state. It must allow JSON serialization
+    :param str serialization_id: a string identifying the serialized state,
+      if not given the registry will fill it the registered id.
     """
 
-    def __init__(self, serialization_id, value):
+    def __init__(self, value, serialization_id=None):
         super().__init__(NODE_SERIALIZIED_ID_KEY=serialization_id,
                          NODE_SERIALIZIED_VALUE_KEY=value)
 
@@ -186,6 +137,90 @@ class SerializationDefinition:
         return cls
 
     __call__ = register_class
+
+
+class Registry:
+    """A registry of serialization definitions indexed by *serialization_id* and
+    *class*. An instance of this class is exported in place of the whole module
+    for easier fruition."""
+
+    SerializedMeta = SerializedMeta
+    Serialized = Serialized
+    Serializable = Serializable
+    SerializationError = SerializationError
+    SerializationDefinition = SerializationDefinition
+    define = SerializationDefinition
+
+    def __init__(self):
+        self._id_to_definition = {}
+        self._cls_to_definition = {}
+
+    def add_registration(self, definition):
+        """Add a definition to the registry. This is automatically called by each
+        definition instance.
+
+        :param definition: an instance of `SerializationDefinition`
+        """
+        assert (definition.serialization_id is not None and
+                isinstance(definition.serialization_id, str))
+        if definition.serialization_id in self._id_to_definition:
+            raise SerializationError(f"The id '{definition.serialization_id}' is taken "
+                                     f"already")
+        assert definition.cls is not None
+        if definition.cls in self._cls_to_definition:
+            raise SerializationError(f"Class {definition.cls.__name__} is "
+                                     f"already registered")
+
+        self._id_to_definition[definition.serialization_id] = definition
+        self._cls_to_definition[definition.cls] = definition
+
+    def serialize(self, src_node, instance):
+        """Called by node machinery to serialize an instance before sending it
+        remotely.
+
+        :param src_node: the `Node` node that generated the `instance` that has
+          to be serialized
+        :param instance: an instance to serialize. Should be and instance of a
+          `Serializable` subclass
+        :returns: an instance of `Serialized`
+        :raises SerializationError: if a meatching serialization definition
+          cannot be found
+        """
+        cls = type(instance)
+        definition = None
+        if cls in self._cls_to_definition:
+            definition = self._cls_to_definition[cls]
+        elif hasattr(instance, NODE_SERIALIZATION_CLASS_KEY):
+            serialization_id = getattr(instance, NODE_SERIALIZATION_CLASS_KEY)
+            if serialization_id in self._id_to_definition:
+                definition = self._id_to_definition[serialization_id]
+        if definition is None:
+            raise SerializationError(f"Don't  know how to serialize {instance!r}")
+        result = definition.serializer.node_serialize(instance)
+        if Serialized.get_id(result) is None:
+            result[NODE_SERIALIZIED_ID_KEY] = definition.serialization_id
+        return result
+
+    def deserialize(self, end_node, serialized):
+        """Called by node machinery to deserialize a value upon reception.
+
+        :param end_node: the `Node` instance to which the deserialized value
+          will be submitted
+        :param serialized: an instance of `Serialized`
+        :returns: anything suitable
+        :raises SerializationError: if a matching definition cannot be found
+        """
+        if not isinstance(serialized, self.Serialized):
+            raise SerializationError(f"{serialized!r} is not a valid "
+                                     f"serializied value")
+        definition = self._id_to_definition.get(
+            serialized[NODE_SERIALIZIED_ID_KEY])
+        if definition is None:
+            raise SerializationError(f"Don't  know how to deserialize "
+                                     f"{serialized!r}")
+        return definition.serializer.node_deserialize(
+            serialized[NODE_SERIALIZIED_VALUE_KEY]
+        )
 
 
 REGISTRY = Registry()
