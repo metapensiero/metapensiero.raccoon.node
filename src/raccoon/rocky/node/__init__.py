@@ -11,6 +11,8 @@ from .context import NodeContext, WAMPNodeContext
 from .node import Node, WAMPNode
 from .wamp import call
 
+from . import serialize
+
 
 __all__ = (
     'Node',
@@ -19,4 +21,5 @@ __all__ = (
     'WAMPNode',
     'WAMPNodeContext',
     'call',
+    'serialize',
 )
