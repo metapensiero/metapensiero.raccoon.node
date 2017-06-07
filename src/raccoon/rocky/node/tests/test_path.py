@@ -10,6 +10,7 @@ import pytest
 
 from raccoon.rocky.node.path import Path
 
+
 @pytest.fixture
 def apath():
     return Path(
@@ -17,11 +18,13 @@ def apath():
         ('foo', 'bar', 'a_session_id'),
     )
 
+
 def test_absolute_returns_absolute(apath):
     path = apath.resolve(('a', 'completely', 'different', 'address'))
     assert str(path) == 'a.completely.different.address'
     path = apath.resolve('a.completely.different.address')
     assert str(path) == 'a.completely.different.address'
+
 
 def test_relative(apath):
     path = apath.resolve('@client.node1.node2')

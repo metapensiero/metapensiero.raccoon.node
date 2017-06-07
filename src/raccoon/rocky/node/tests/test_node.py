@@ -3,16 +3,15 @@
 # :Created:   gio 24 mar 2016 17:00:52 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: © 2016, 2017 Arstecnica s.r.l.
 #
 
-from unittest.mock import patch
+# from unittest.mock import patch
 
 import pytest
 
 from metapensiero.signal import Signal, handler
 
-from raccoon.rocky.node import context
 from raccoon.rocky.node.path import Path
 from raccoon.rocky.node.node import Node, WAMPNode
 from raccoon.rocky.node.wamp import call

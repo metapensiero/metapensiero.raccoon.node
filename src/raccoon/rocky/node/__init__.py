@@ -3,7 +3,7 @@
 # :Created:   dom 09 ago 2015 12:57:35 CEST
 # :Author:    Alberto Berti <alberto@arstecnica.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
+# :Copyright: © 2016, 2017 Arstecnica s.r.l.
 #
 
 from .path import Path
