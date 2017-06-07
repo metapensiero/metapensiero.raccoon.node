@@ -68,6 +68,7 @@ async def test_register_and_call_rpc(wamp_context, event_loop):
     with patch.object(rpc_test, 'callme') as callme:
         await rpc_test.node_register()
         wsess = wamp_context.wamp_session
+        callme.return_value = None
 
 
         # This cannot be checked anymore because the handler is now a partial.
