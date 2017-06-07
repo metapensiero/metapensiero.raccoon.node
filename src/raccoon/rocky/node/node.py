@@ -303,8 +303,7 @@ class WAMPNode(Node, serialize.Serializable, metaclass=WAMPInitMeta):
         return self.__class__.manager.call(self, path, *args, **kwargs)
 
     @classmethod
-    def node_deserialize(cls, endpoint_node, serialized):
-        value = serialized.Serialized.get_value(serialized)
+    def node_deserialize(cls, value, endpoint_node):
         return endpoint_node.remote(value)
 
     async def node_register(self):

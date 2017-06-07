@@ -89,8 +89,9 @@ class Serialized(dict, metaclass=SerializedMeta):
     """
 
     def __init__(self, value, serialization_id=None):
-        super().__init__(NODE_SERIALIZIED_ID_KEY=serialization_id,
-                         NODE_SERIALIZIED_VALUE_KEY=value)
+        super().__init__()
+        self[NODE_SERIALIZIED_ID_KEY] = serialization_id
+        self[NODE_SERIALIZIED_VALUE_KEY] = value
 
 
 class SerializationDefinition:
@@ -126,7 +127,8 @@ class SerializationDefinition:
                 raise SerializationError(f"No serializer provided and class"
                                          f" {cls.__name__} isn't serializable")
         else:
-            if issubclass(self.serializer, Serializable):
+            if (issubclass(self.serializer, Serializable) or
+                isinstance(self.serializer, Serializable)):
                 Serializable.register(cls)
             else:
                 raise SerializationError(f"The provided serializer is not "
@@ -196,8 +198,10 @@ class Registry:
             if serialization_id in self._id_to_definition:
                 definition = self._id_to_definition[serialization_id]
         if definition is None:
-            raise SerializationError(f"Don't  know how to serialize {instance!r}")
-        result = definition.serializer.node_serialize(instance)
+            raise SerializationError(f"Don't know how to serialize {instance!r}")
+        result = definition.serializer.node_serialize(instance, src_node)
+        if not isinstance(result, Serialized):
+            result = Serialized(result)
         if Serialized.get_id(result) is None:
             result[NODE_SERIALIZIED_ID_KEY] = definition.serialization_id
         return result
@@ -213,14 +217,15 @@ class Registry:
         """
         if not isinstance(serialized, self.Serialized):
             raise SerializationError(f"{serialized!r} is not a valid "
-                                     f"serializied value")
+                                     f"serialized value")
         definition = self._id_to_definition.get(
             serialized[NODE_SERIALIZIED_ID_KEY])
         if definition is None:
-            raise SerializationError(f"Don't  know how to deserialize "
+            raise SerializationError(f"Don't know how to deserialize "
                                      f"{serialized!r}")
         return definition.serializer.node_deserialize(
-            serialized[NODE_SERIALIZIED_VALUE_KEY]
+            serialized[NODE_SERIALIZIED_VALUE_KEY],
+            end_node
         )
 
 
