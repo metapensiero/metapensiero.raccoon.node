@@ -8,8 +8,10 @@
 
 import pytest
 
+from metapensiero.signal import handler, Signal
 from raccoon.rocky.node import call, Path, serialize, WAMPNode
 from raccoon.rocky.node.proxy import Proxy
+
 
 @serialize.define('test.Simple', allow_subclasses=True)
 class SimpleSerializable(serialize.Serializable):
@@ -129,13 +131,23 @@ def test_serialize_ext():
 
 
 @pytest.mark.asyncio
-async def test_same_session_no_serialize(wamp_context, event_loop):
+async def test_serialize_node_same_session_no_serialization(
+        wamp_context, event_loop, events):
+
+    events.define('asignal')
 
     class RPCTest(WAMPNode):
+
+        asignal = Signal()
 
         @call
         def callee(self):
             return self
+
+        @handler('asignal')
+        def store_incoming(self, node):
+            events.asignal.set()
+            self.node = node
 
     class RPCTest2(WAMPNode):
 
@@ -153,17 +165,29 @@ async def test_same_session_no_serialize(wamp_context, event_loop):
     res = await rpc_test2.caller()
     assert res is rpc_test
 
+    rpc_test2.remote('@test').asignal.notify(rpc_test2)
+    await events.wait_for(events.asignal, 5)
+    assert rpc_test.node is rpc_test2
+
 
 @pytest.mark.asyncio
-async def test_two_sessions_do_serialize(wamp_context,  wamp_context2,
-                                         event_loop, events):
+async def test_serialize_node_two_sessions_do_serialize(
+        wamp_context,  wamp_context2, event_loop, events):
 
+    events.define('asignal')
 
     class RPCTest(WAMPNode):
+
+        asignal = Signal()
 
         @call
         def callee(self):
             return self
+
+        @handler('asignal')
+        def store_incoming(self, node):
+            events.asignal.set()
+            self.node = node
 
     class RPCTest2(WAMPNode):
 
@@ -183,3 +207,9 @@ async def test_two_sessions_do_serialize(wamp_context,  wamp_context2,
     assert res is not rpc_test
     assert isinstance(res, Proxy)
     assert res.node_path == path
+
+    rpc_test2.remote('@test').asignal.notify(rpc_test2)
+    await events.wait_for(events.asignal, 5)
+    assert rpc_test.node is not rpc_test2
+    assert isinstance(rpc_test.node, Proxy)
+    assert rpc_test.node.node_path == path2
