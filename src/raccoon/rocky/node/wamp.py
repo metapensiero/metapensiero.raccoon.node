@@ -128,10 +128,10 @@ class NodeWAMPManager:
 
     def _deserialize(self, node, args, kwargs):
         """Called to deserialize any `Serialized` value."""
-        return (tuple((serialize.deserialize(node, v)
+        return (tuple((serialize.deserialize(v, node)
                        if isinstance(v, serialize.Serialized) else v)
                       for v in args),
-                {k: (serialize.deserialize(node, v) if
+                {k: (serialize.deserialize(v, node) if
                      isinstance(v, serialize.Serialized) else v)
                    for k, v in kwargs.items()})
 
@@ -140,11 +140,11 @@ class NodeWAMPManager:
         :term:`WAMP` calls."""
         if isinstance(in_result, (tuple, list)):
             return type(in_result)(
-                (serialize.deserialize(node, v)
+                (serialize.deserialize(v, node)
                  if isinstance(v, serialize.Serialized) else v)
                 for v in in_result)
         else:
-            return (serialize.deserialize(node, in_result)
+            return (serialize.deserialize(in_result, node)
                     if isinstance(in_result, serialize.Serialized) else
                     in_result)
 
@@ -364,10 +364,10 @@ class NodeWAMPManager:
 
     def _serialize(self, node, args, kwargs):
         """Called to serialize any serializable value."""
-        return (tuple((serialize.serialize(node, v) if
+        return (tuple((serialize.serialize(v, node) if
                        isinstance(v, serialize.Serializable) else v)
                       for v  in args),
-                {k: (serialize.serialize(node, v) if
+                {k: (serialize.serialize(v, node) if
                      isinstance(v, serialize.Serializable) else v)
                    for k, v in kwargs.items()})
 
@@ -376,11 +376,11 @@ class NodeWAMPManager:
         :term:`WAMP` calls when """
         if isinstance(in_result, (tuple, list)):
             return type(in_result)(
-                (serialize.serialize(node, v) if
+                (serialize.serialize(v, node) if
                  isinstance(v, serialize.Serializable) else v)
                 for v in in_result)
         else:
-            return (serialize.serialize(node, in_result)
+            return (serialize.serialize(in_result, node)
                     if isinstance(in_result, serialize.Serializable) else
                     in_result)
 

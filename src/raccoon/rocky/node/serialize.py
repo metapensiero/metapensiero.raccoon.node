@@ -23,26 +23,27 @@ class Serializable(metaclass=abc.ABCMeta):
     should be serialized should expose."""
 
     @abc.abstractmethod
-    def node_serialize(self, node, instance):
+    def node_serialize(self, instance, src_node=None):
         """Called by the node infrastructure to have the one instance of the
         class serialized.
 
+        :param instance: An instance of the type to serialize
         :param src_node: the `Node` node that generated the `instance` that has
           to be serialized
-        :param instance: An instance of the type to serialize
         :returns: An instance of the `Serialized` class
         :raises SerializationError: if it's unable to serialize the instance
         """
 
     @abc.abstractmethod
-    def node_deserialize(self, end_node, serialized):
+    def node_deserialize(self, value, end_node=None):
         """Called by the node infrastructure to have a serialized state of an instance
         reconverted. I isn't enforced that the returned value is an instance
         of the managed class, it can be anything suitable.
 
+        :param value: The serialized value, the value field of the
+          containing Serialized instance.
         :param end_node: the `Node` instance to which the deserialized value
           will be submitted
-        :param serialized: An instance of the `Serialized` class
         :returns: anything suitable to rephresent the serialized value.
         :raises SerializationError: if it's unable to deserialize the value
 
@@ -174,13 +175,13 @@ class Registry:
         self._id_to_definition[definition.serialization_id] = definition
         self._cls_to_definition[definition.cls] = definition
 
-    def serialize(self, src_node, instance):
+    def serialize(self, instance, src_node=None):
         """Called by node machinery to serialize an instance before sending it
         remotely.
 
+        :param instance: an instance to serialize. Should be and instance of a
         :param src_node: the `Node` node that generated the `instance` that has
           to be serialized
-        :param instance: an instance to serialize. Should be and instance of a
           `Serializable` subclass
         :returns: an instance of `Serialized`
         :raises SerializationError: if a meatching serialization definition
@@ -201,12 +202,12 @@ class Registry:
             result[NODE_SERIALIZIED_ID_KEY] = definition.serialization_id
         return result
 
-    def deserialize(self, end_node, serialized):
+    def deserialize(self, serialized, end_node=None):
         """Called by node machinery to deserialize a value upon reception.
 
+        :param serialized: an instance of `Serialized`
         :param end_node: the `Node` instance to which the deserialized value
           will be submitted
-        :param serialized: an instance of `Serialized`
         :returns: anything suitable
         :raises SerializationError: if a matching definition cannot be found
         """

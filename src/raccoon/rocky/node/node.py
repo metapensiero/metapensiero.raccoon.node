@@ -317,7 +317,7 @@ class WAMPNode(Node, serialize.Serializable, metaclass=WAMPInitMeta):
                                                context=self.node_context)
 
     @classmethod
-    def node_serialize(cls, srcpoint_node, instance):
+    def node_serialize(cls, instance, srcpoint_node):
         if instance.node_path is None:
             raise serialize.SerializationError(
                 "This instance cannot be serialized"
