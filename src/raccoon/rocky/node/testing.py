@@ -7,6 +7,7 @@
 #
 
 import asyncio
+import json
 from unittest import mock
 
 import pytest
@@ -73,7 +74,10 @@ def create_fake_session(global_registry, event_loop):
                 'authid': '<a_fake_id>'
             }
         else:
-            result = await global_registry.call(fake_session, name, *args, **kwargs)
+            args, kwargs = json.dumps(args), json.dumps(kwargs)
+            result = await global_registry.call(fake_session, name, args, kwargs)
+            assert isinstance(result, str)
+            result = json.loads(result)
         return result
 
     async def register(func, name, options=None):
@@ -93,16 +97,18 @@ def create_fake_session(global_registry, event_loop):
     def publish(topic, *args, **kwargs):
         if 'options' in kwargs:
             kwargs.pop('options')
-        global_registry.publish(fake_session, topic, *args, **kwargs)
+        args, kwargs = json.dumps(args), json.dumps(kwargs)
+        global_registry.publish(fake_session, topic, args, kwargs)
 
-    def dispatch_publish(topic, *args, **kwargs):
+    def dispatch_publish(topic, args, kwargs):
         subscribers = registered_handlers.get(topic)
         if subscribers:
-            edetails = FakeEventDetails(87654321, # publication id
+            edetails = FakeEventDetails(87654321,  # publication id
                                         publisher=12345678,
                                         publisher_authid='mock_publisher',
                                         topic=topic)
             fake_session.last_publish_details.return_value = edetails
+            args, kwargs = json.loads(args), json.loads(kwargs)
             for handler in subscribers:
                 # always add publisher's data as if the publisher specified
                 # disclose_me=True
@@ -113,7 +119,7 @@ def create_fake_session(global_registry, event_loop):
                 if asyncio.iscoroutine(result):
                     asyncio.ensure_future(result, loop=event_loop)
 
-    async def dispatch_call(name, *args, **kwargs):
+    async def dispatch_call(name, args, kwargs):
         # simplified dispatch, exact or wildcard at the end:
         # i.e. 'raccoon.api.pippo.pluto' or 'raccoon.api.pippo.'
         chosen = ''
@@ -136,6 +142,7 @@ def create_fake_session(global_registry, event_loop):
                                            caller_authid='mock_caller',
                                            procedure=name)
 
+            args, kwargs = json.loads(args), json.loads(kwargs)
             result = chosen(*args, details=call_details, **kwargs)
             if asyncio.iscoroutine(result):
                 result = await result
@@ -143,6 +150,7 @@ def create_fake_session(global_registry, event_loop):
         else:
             # TODO: should raise a proper autobahn error
             raise ValueError('Procedure "{}" is not registered'.format(name))
+        result = json.dumps(result)
         return result
 
     fake_session = mock.NonCallableMock()
@@ -169,15 +177,15 @@ class GlobalRegistry:
     def add(self, session):
         self.sessions.add(session)
 
-    def publish(self, session, topic, *args, **kwargs):
+    def publish(self, session, topic, args, kwargs):
         other_sessions = self.sessions - set((session,))
         for sess in other_sessions:
-            sess.dispatch_publish(topic, *args, **kwargs)
+            sess.dispatch_publish(topic, args, kwargs)
 
-    async def call(self, session, uri, *args, **kwargs):
+    async def call(self, session, uri, args, kwargs):
         for sess in self.sessions:
             try:
-                res = await sess.dispatch_call(uri, *args, **kwargs)
+                res = await sess.dispatch_call(uri, args, kwargs)
                 break
             except ValueError:
                 pass
@@ -220,6 +228,7 @@ def wamp_context(wamp_session, event_loop):
         wamp_session=wamp_session
     )
 
+
 @pytest.fixture(scope='function')
 def wamp_context2(wamp_session2, event_loop):
     return context.WAMPNodeContext(
@@ -233,6 +242,7 @@ def node_context(event_loop):
     return context.NodeContext(
         event_loop
     )
+
 
 class EventFactory:
     """An helper class that helps creating asyncio.Event instances and
