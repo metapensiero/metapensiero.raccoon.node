@@ -111,21 +111,6 @@ class NodeWAMPManager:
         bind.apply_defaults()
         return bind.args, bind.kwargs
 
-
-    async def _complete_coros(self, results, coros, serialize=False):
-        """Wait for the completion of the coros and return both non-coro results
-        and coro-results together. perform serialization if requested."""
-        if len(coros):
-            cresults = await asyncio.gather(*coros)
-        else:
-            cresults = ()
-        if serialize:
-            return tuple((serialize.serialize(v) if
-                          isinstance(v, serialize.Serializable) else v)
-                         for v  in itertools.chain(results, cresults))
-        else:
-            return (*results, *cresults)
-
     def _deserialize(self, node, args, kwargs):
         """Called to deserialize any `Serialized` value."""
         return (tuple((serialize.deserialize(v, node)
@@ -197,12 +182,10 @@ class NodeWAMPManager:
         """
         reg_item = self.reg_store.get(uri, REG_TYPE_SUB)
         results = []
-        coros = []
         # the case of event dispatchment is a bit more complex than the
         # procedure dispatch, this is because there can be multiple endpoints
         # per session, but they don't get called by autobahn if the source of
         # the event is registered on the same session of the destination.
-        ndispatches = 0
         for point in reg_item.points:
             # skip destinations registered for sessions different than the
             # reference one, as this method will be called one time per
@@ -222,25 +205,15 @@ class NodeWAMPManager:
             res = self._dispatch(uri, point.node, point.func, wrapper, args, kw,
                                  local_dispatch=local_dispatch_)
             if res is not None:
-                ndispatches += 1
                 if inspect.isawaitable(res):
-                    coros.append(res)
-                else:
                     results.append(res)
-        # here the logic is that the caller is interested in the result only
-        # if local_dispatch_ is True (i.e. it has been called by notify) but in that
-        # case a serialization is not needed. The only important thing is to
-        # ensure that if a result is a coroutine, it will be properly
-        # recognized by the caller and therefore it will wait on it.
-        if ndispatches == 1 and len(results) == 1:
-            return results[0]
-        elif ndispatches == 1 and len(results) == 0:
-            # autobahn's txaio will take care of it
-            return coros[0]
-        elif ndispatches > 1 and len(coros):
-            return self._complete_coros(results, coros)
-        else:
-            return results
+        # here the only important thing is to ensure that if a result is a
+        # coroutine, it will be properly recognized by the caller and
+        # therefore it will wait on it.
+        if len(results) == 1:
+            return asyncio.ensure_future(results[0])
+        elif len(results) > 1:
+            return asyncio.gather(*results)
 
     def _dispatch_procedure(self, src_session, uri, *args,
                             local_dispatch_=False, **kwargs):
@@ -435,7 +408,7 @@ class NodeWAMPManager:
                 result = node.node_context.wamp_session.call(
                     str_path, *args, **kwargs)
             except:
-                logger.exception("Error while dispatching for '%s'", str_path)
+                logger.exception("Error while dispatching to '%s'", str_path)
                 raise
         if inspect.isawaitable(result):
             if not local_dispatch:
@@ -538,6 +511,8 @@ class NodeWAMPManager:
             if not awaitable:
                 res = None
         elif len(coros) > 1:
+            # this has to run no matter way, because it ensures correct
+            # scheduling
             res = asyncio.gather(*coros, loop=src_point.node.node_context.loop)
             if not awaitable:
                 res = None

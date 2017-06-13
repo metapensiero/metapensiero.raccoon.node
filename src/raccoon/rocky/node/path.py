@@ -143,15 +143,13 @@ class Path(serialize.Serializable, metaclass=PathMeta):
         return type(self)(self.path)
 
     @classmethod
-    def node_deserialize(cls, serialized, endpoint_node):
-        value = serialize.Serialized.get_value()
+    def node_deserialize(cls, value, endpoint_node):
         return cls(**value)
 
     @classmethod
     def node_serialize(cls, instance, srcpoint_node):
-        return serialize.Serialized(
-            {'path': instance._path,
-             'base': instance.base.path if instance.base is not None else None})
+        return {'path': instance._path,
+                'base': instance.base.path if instance.base is not None else None}
 
     @property
     def path(self):
