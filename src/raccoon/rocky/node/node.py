@@ -179,7 +179,6 @@ class Node(metaclass=SignalAndHandlerInitMeta):
                                        path=self.node_path,
                                        parent=self.node_parent)
 
-
     def node_child_on_unbind(self, node, path, parent):
         """Called when a child node unbind itself, by default it will remove
         the attribute reference on it.

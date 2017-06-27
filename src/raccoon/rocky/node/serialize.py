@@ -49,6 +49,7 @@ class Serializable(metaclass=abc.ABCMeta):
 
         """
 
+
 class SerializedMeta(type):
     """Metaclass for the `Serialized` class, it is used to dynamically check if an
     instance of ``dict`` is also an instance of `Serialized`.
