@@ -9,7 +9,6 @@
 from abc import ABCMeta, abstractmethod
 import asyncio
 import inspect
-import itertools
 import logging
 
 from autobahn.wamp.types import SubscribeOptions, RegisterOptions
