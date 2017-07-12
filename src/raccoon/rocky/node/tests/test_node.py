@@ -8,6 +8,7 @@
 
 # from unittest.mock import patch
 
+import asyncio
 import pytest
 
 from metapensiero.signal import Signal, handler
@@ -387,3 +388,28 @@ async def test_call_dot(wamp_context,  wamp_context2,
     events.me_handler.clear()
     await rpc_test2.remote('@test').notify(awaitable=True)
     assert events.me_handler.is_set()
+
+
+@pytest.mark.asyncio
+async def test_node_unbind_runs_only_one_time():
+
+    class MyNode(Node):
+
+        _counts = 0
+
+        async def _node_unbind(self):
+            self._counts += 1
+
+
+    my_node = MyNode()
+
+    async def unbind_it(node):
+        await node.node_unbind()
+
+    unbind1 = asyncio.ensure_future(unbind_it(my_node))
+    unbind2 = asyncio.ensure_future(unbind_it(my_node))
+
+    await unbind1
+    await unbind2
+
+    assert my_node._counts == 1

@@ -6,6 +6,7 @@
 # :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
+import asyncio
 import logging
 
 from metapensiero.signal import (Signal, SignalAndHandlerInitMeta)
@@ -46,7 +47,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
       the parent node
     """
 
-    on_node_unbind = Signal()
+    on_node_unbind = Signal(sequential_async_handlers=True,
+                            sort_mode=Signal.SORT_MODE.TOPDOWN)
     """Signal emitted at the end of :meth:`node_unbind` call. Every callback
     will receive the same parameters as the `on_node_bind` signal.
     """
@@ -65,6 +67,9 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     describes the position in the tree and the base path for :term:`WAMP`
     functionality.
     """
+
+    _node_unbind_task = None
+    """Track if an unbind has started already"""
 
     def __delattr__(self, name):
         """Deleting an attribute which has a node as value automatically will
@@ -123,6 +128,13 @@ class Node(metaclass=SignalAndHandlerInitMeta):
             self.node_parent.on_node_unbind.disconnect(
                 self._node_on_parent_unbind)
             del self.node_parent
+
+    async  def _node_unbind_inner(self):
+        await self.on_node_unbind.notify(node=self,
+                                         path=self.node_path,
+                                         parent=self.node_parent)
+        await self._node_unbind()
+
 
     @property
     def loop(self):
@@ -219,10 +231,12 @@ class Node(metaclass=SignalAndHandlerInitMeta):
           This whas changed from a normal method (with transaction tracking)
           to a *coroutine*.
         """
-        await self.on_node_unbind.notify(node=self,
-                                         path=self.node_path,
-                                         parent=self.node_parent)
-        await self._node_unbind()
+        if self._node_unbind_task is None:
+            self._node_unbind_task = asyncio.ensure_future(
+                self._node_unbind_inner())
+            await self._node_unbind_task
+        else:
+            await self._node_unbind_task
 
 
 @serialize.define('raccoon.node.WAMPNode', allow_subclasses=True)
