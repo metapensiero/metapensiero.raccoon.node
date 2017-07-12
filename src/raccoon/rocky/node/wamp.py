@@ -251,8 +251,8 @@ class NodeWAMPManager:
 
         signals_data = type(node)._signals
         # filter out internal signals
-        signals_data = {n: sig for n, sig in signals_data.items() if n not in
-                        NODE_INTERNAL_SIGNALS}
+        signals_data = {n: sig for n, sig in signals_data.items() if
+                        (n not in NODE_INTERNAL_SIGNALS) and sig is not None}
         path = node.node_path
         logger.debug("Beginning registration of: %s", node)
         # deal with calls first
