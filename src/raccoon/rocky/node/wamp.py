@@ -171,7 +171,7 @@ class NodeWAMPManager:
                 elif not local_dispatch:
                     result = self._serialize_result(node, result)
             except:
-                logger.exception("Error while dispatching for '%s'", uri)
+                logger.error("Error while dispatching for '%s'", uri)
                 raise
         return result
 
@@ -368,7 +368,7 @@ class NodeWAMPManager:
         try:
             in_result = await in_result
         except:
-            logger.exception("Error while dispatching for '%s'", uri)
+            logger.error("Error while dispatching for '%s'", uri)
             raise
         if serialize:
             return self._serialize_result(node, in_result)
@@ -407,7 +407,7 @@ class NodeWAMPManager:
                 result = node.node_context.wamp_session.call(
                     str_path, *args, **kwargs)
             except:
-                logger.exception("Error while dispatching to '%s'", str_path)
+                logger.error("Error while dispatching to '%s'", str_path)
                 raise
         if inspect.isawaitable(result):
             if not local_dispatch:
@@ -431,8 +431,7 @@ class NodeWAMPManager:
             await self.reg_store.add_subscription(node, node.node_context,
                                                   (str(path), handler, False))
         except WAMPApplicationError:
-            logger.exception("Error while registering subscription to '%s'",
-                             path)
+            logger.error("Error while registering subscription to '%s'", path)
             raise
 
     async def disconnect(self, node, path, handler):
@@ -444,8 +443,8 @@ class NodeWAMPManager:
             await self.reg_store.remove(node, node.node_context, str(path),
                                         handler, REG_TYPE_SUB)
         except WAMPApplicationError:
-            logger.exception("Error while unregistering subscription to '%s'",
-                             path)
+            logger.error("Error while unregistering subscription to '%s'",
+                         path)
             raise
 
     def get_point(self, node, func=None):
