@@ -106,11 +106,14 @@ class SerializationDefinition:
     """
 
     def __init__(self, serialization_id, *, allow_subclasses=False,
-                 serializer=None):
+                 serializer=None, cls=None):
         self.serialization_id = serialization_id
         self.allow_subclasses = allow_subclasses
         self.serializer = serializer
-        self.cls = None
+        if cls:
+            self.register_class(cls)
+        else:
+            cls = None
 
     def register_class(self, cls):
         """Register the given class in the registry, usable also as a class
