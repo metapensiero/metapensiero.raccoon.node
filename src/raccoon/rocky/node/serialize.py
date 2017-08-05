@@ -181,6 +181,50 @@ class Registry:
         self._id_to_definition[definition.serialization_id] = definition
         self._cls_to_definition[definition.cls] = definition
 
+    def deserialize(self, serialized, end_node=None):
+        """Called by node machinery to deserialize a value upon reception.
+
+        :param serialized: an instance of `Serialized`
+        :param end_node: the `Node` instance to which the deserialized value
+          will be submitted
+        :returns: anything suitable
+        :raises SerializationError: if a matching definition cannot be found
+        """
+        if not isinstance(serialized, self.Serialized):
+            raise SerializationError(f"{serialized!r} is not a valid "
+                                     f"serialized value")
+        definition = self._id_to_definition.get(
+            serialized[NODE_SERIALIZIED_ID_KEY])
+        if definition is None:
+            raise SerializationError(f"Don't know how to deserialize "
+                                     f"{serialized!r}")
+        return definition.serializer.node_deserialize(
+            serialized[NODE_SERIALIZIED_VALUE_KEY],
+            end_node
+        )
+
+    def deserialize_args(self, node, args, kwargs):
+        """Called to deserialize any `Serialized` value."""
+        return (tuple((self.deserialize(v, node)
+                       if isinstance(v, Serialized) else v)
+                      for v in args),
+                {k: (self.deserialize(v, node) if
+                     isinstance(v, Serialized) else v)
+                   for k, v in kwargs.items()})
+
+    def deserialize_result(self, node, in_result):
+        """Deserialize a scalar result or a tuple of results coming from
+        :term:`WAMP` calls."""
+        if isinstance(in_result, (tuple, list)):
+            return type(in_result)(
+                (self.deserialize(v, node)
+                 if isinstance(v, Serialized) else v)
+                for v in in_result)
+        else:
+            return (self.deserialize(in_result, node)
+                    if isinstance(in_result, Serialized) else
+                    in_result)
+
     def serialize(self, instance, src_node=None):
         """Called by node machinery to serialize an instance before sending it
         remotely.
@@ -210,27 +254,27 @@ class Registry:
             result[NODE_SERIALIZIED_ID_KEY] = definition.serialization_id
         return result
 
-    def deserialize(self, serialized, end_node=None):
-        """Called by node machinery to deserialize a value upon reception.
+    def serialize_args(self, node, args, kwargs):
+        """Called to serialize any serializable value."""
+        return (tuple((self.serialize(v, node) if
+                       isinstance(v, Serializable) else v)
+                      for v  in args),
+                {k: (self.serialize(v, node) if
+                     isinstance(v, Serializable) else v)
+                   for k, v in kwargs.items()})
 
-        :param serialized: an instance of `Serialized`
-        :param end_node: the `Node` instance to which the deserialized value
-          will be submitted
-        :returns: anything suitable
-        :raises SerializationError: if a matching definition cannot be found
-        """
-        if not isinstance(serialized, self.Serialized):
-            raise SerializationError(f"{serialized!r} is not a valid "
-                                     f"serialized value")
-        definition = self._id_to_definition.get(
-            serialized[NODE_SERIALIZIED_ID_KEY])
-        if definition is None:
-            raise SerializationError(f"Don't know how to deserialize "
-                                     f"{serialized!r}")
-        return definition.serializer.node_deserialize(
-            serialized[NODE_SERIALIZIED_VALUE_KEY],
-            end_node
-        )
+    def serialize_result(self, node, in_result):
+        """Deserialize a scalar result or a tuple of results coming from
+        :term:`WAMP` calls when """
+        if isinstance(in_result, (tuple, list)):
+            return type(in_result)(
+                (self.serialize(v, node) if
+                 isinstance(v, Serializable) else v)
+                for v in in_result)
+        else:
+            return (self.serialize(in_result, node)
+                    if isinstance(in_result, Serializable) else
+                    in_result)
 
 
 REGISTRY = Registry()
