@@ -129,7 +129,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
                 self._node_on_parent_unbind)
             del self.node_parent
 
-    async  def _node_unbind_inner(self):
+    async def _node_unbind_inner(self):
         await self.on_node_unbind.notify(node=self,
                                          path=self.node_path,
                                          parent=self.node_parent)
