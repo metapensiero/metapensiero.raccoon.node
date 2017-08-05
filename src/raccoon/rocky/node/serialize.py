@@ -203,25 +203,25 @@ class Registry:
             end_node
         )
 
-    def deserialize_args(self, node, args, kwargs):
+    def deserialize_args(self, args, kwargs, end_node=None):
         """Called to deserialize any `Serialized` value."""
-        return (tuple((self.deserialize(v, node)
+        return (tuple((self.deserialize(v, end_node)
                        if isinstance(v, Serialized) else v)
                       for v in args),
-                {k: (self.deserialize(v, node) if
+                {k: (self.deserialize(v, end_node) if
                      isinstance(v, Serialized) else v)
                    for k, v in kwargs.items()})
 
-    def deserialize_result(self, node, in_result):
+    def deserialize_result(self, in_result, end_node=None):
         """Deserialize a scalar result or a tuple of results coming from
         :term:`WAMP` calls."""
         if isinstance(in_result, (tuple, list)):
             return type(in_result)(
-                (self.deserialize(v, node)
+                (self.deserialize(v, end_node)
                  if isinstance(v, Serialized) else v)
                 for v in in_result)
         else:
-            return (self.deserialize(in_result, node)
+            return (self.deserialize(in_result, end_node)
                     if isinstance(in_result, Serialized) else
                     in_result)
 
@@ -254,25 +254,25 @@ class Registry:
             result[NODE_SERIALIZIED_ID_KEY] = definition.serialization_id
         return result
 
-    def serialize_args(self, node, args, kwargs):
+    def serialize_args(self, args, kwargs, src_node=None):
         """Called to serialize any serializable value."""
-        return (tuple((self.serialize(v, node) if
+        return (tuple((self.serialize(v, src_node) if
                        isinstance(v, Serializable) else v)
                       for v  in args),
-                {k: (self.serialize(v, node) if
+                {k: (self.serialize(v, src_node) if
                      isinstance(v, Serializable) else v)
                    for k, v in kwargs.items()})
 
-    def serialize_result(self, node, in_result):
+    def serialize_result(self, in_result, src_node=None):
         """Deserialize a scalar result or a tuple of results coming from
         :term:`WAMP` calls when """
         if isinstance(in_result, (tuple, list)):
             return type(in_result)(
-                (self.serialize(v, node) if
+                (self.serialize(v, src_node) if
                  isinstance(v, Serializable) else v)
                 for v in in_result)
         else:
-            return (self.serialize(in_result, node)
+            return (self.serialize(in_result, src_node)
                     if isinstance(in_result, Serializable) else
                     in_result)
 

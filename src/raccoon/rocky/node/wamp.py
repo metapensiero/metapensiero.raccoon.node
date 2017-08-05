@@ -138,7 +138,7 @@ class NodeWAMPManager:
             try:
                 args, kwargs = self._adapt_call_params(func, args, kwargs)
                 if not local_dispatch:
-                    args, kwargs = deserialize_args(node, args, kwargs)
+                    args, kwargs = deserialize_args(args, kwargs, node)
                 if callable(wrapper):
                     result = wrapper(self, uri, node, func, args, kwargs,
                                      local_dispatch=local_dispatch)
@@ -148,7 +148,7 @@ class NodeWAMPManager:
                     result = self._wrap_async_result(
                         uri, node, result, serialize=not local_dispatch)
                 elif not local_dispatch:
-                    result = serialize_result(node, result)
+                    result = serialize_result(result, node)
             except:
                 logger.error("Error while dispatching for '%s'", uri)
                 raise
@@ -328,9 +328,9 @@ class NodeWAMPManager:
             logger.error("Error while dispatching for '%s'", uri)
             raise
         if serialize:
-            return serialize_result(node, in_result)
+            return serialize_result(in_result, node)
         elif deserialize:
-            return deserialize_result(node, in_result)
+            return deserialize_result(in_result, node)
         else:
             return in_result
 
@@ -359,7 +359,7 @@ class NodeWAMPManager:
                 local_dispatch_=True, **kwargs)
         else:
             local_dispatch = False
-            args, kwargs = serialize_args(node, args, kwargs)
+            args, kwargs = serialize_args(args, kwargs, node)
             try:
                 result = node.node_context.wamp_session.call(
                     str_path, *args, **kwargs)
@@ -372,7 +372,7 @@ class NodeWAMPManager:
                                                  deserialize=True)
         else:
             if not local_dispatch:
-                result = deserialize_result(node, result)
+                result = deserialize_result(result, node)
             result = self._wrap_async(result)
         return result
 
@@ -448,7 +448,7 @@ class NodeWAMPManager:
         else:
             disp = None
         wrapper = src_point.node.node_context.publication_wrapper
-        args, kwargs = serialize_args(src_point.node, args, kwargs)
+        args, kwargs = serialize_args(args, kwargs, src_point.node)
         if callable(wrapper):
             # TODO: check all wrappers api
             publication = wrapper(self, src_point, str_path, args, kwargs)
