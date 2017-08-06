@@ -131,8 +131,10 @@ class SerializationDefinition:
                 raise SerializationError(f"No serializer provided and class"
                                          f" {cls.__name__} isn't serializable")
         else:
-            if (issubclass(self.serializer, Serializable) or
-                isinstance(self.serializer, Serializable)):
+            if ((isinstance(self.serializer, type) and
+                 issubclass(self.serializer, Serializable)) or
+                (not isinstance(self.serializer, type) and
+                 isinstance(self.serializer, Serializable))):
                 Serializable.register(cls)
             else:
                 raise SerializationError(f"The provided serializer is not "
