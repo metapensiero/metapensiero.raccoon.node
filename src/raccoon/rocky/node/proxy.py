@@ -7,6 +7,7 @@
 #
 
 from .path import Path
+from . import serialize
 
 
 class ProxyError(Exception):
@@ -55,3 +56,26 @@ class Proxy:
         manager = self.__node.__class__.manager
         return manager.notify(manager.get_point(self.__node), self.node_path,
                               *args, **kwargs)
+
+
+class ProxySerializer(serialize.Serializable):
+
+    def node_deserialize(self, value, end_node=None):
+        raise serialize.SerializationError(
+                "It's an error to deserialize a NodeProxy"
+            )
+
+    def node_serialize(self, instance, src_node=None):
+        if instance.node_path is None:
+            raise serialize.SerializationError(
+                "This instance cannot be serialized"
+            )
+        # this uses the same serialization key of the Node class, there's no
+        # point in having a proper serialization form for NodeProxy, it's a
+        # stub
+        return serialize.Serialized(
+            str(instance.node_path), 'raccoon.node.WAMPNode')
+
+
+serialize.define('raccoon.node.NodeProxy', serializer=ProxySerializer(),
+                 cls=Proxy)
