@@ -6,6 +6,15 @@
 # :Copyright: © 2016, 2017 Arstecnica s.r.l.
 #
 
+import logging
+
+
+NOISY_ERROR_LOGGER = logging.Logger.error
+
+
+def log_noisy_error(logger, *args, **kwargs):
+    NOISY_ERROR_LOGGER(logger, *args, **kwargs)
+
 from .path import Path
 from .context import NodeContext, WAMPNodeContext
 from .node import Node, WAMPNode

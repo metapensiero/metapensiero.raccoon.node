@@ -21,6 +21,8 @@ from .registrations import (RegistrationStore, RPCPoint, REG_TYPE_CALL,
 from .serialize import (deserialize_args, deserialize_result, serialize_args,
                         serialize_result)
 
+from . import log_noisy_error
+
 
 NODE_INTERNAL_SIGNALS = (
     'on_node_bind',
@@ -150,7 +152,7 @@ class NodeWAMPManager:
                 elif not local_dispatch:
                     result = serialize_result(result, node)
             except:
-                logger.error("Error while dispatching for '%s'", uri)
+                log_noisy_error(logger, "Error while dispatching for '%s'", uri)
                 raise
         return result
 
@@ -325,7 +327,7 @@ class NodeWAMPManager:
         try:
             in_result = await in_result
         except:
-            logger.error("Error while dispatching for '%s'", uri)
+            log_noisy_error(logger, "Error while dispatching for '%s'", uri)
             raise
         if serialize:
             return serialize_result(in_result, node)
@@ -364,7 +366,8 @@ class NodeWAMPManager:
                 result = node.node_context.wamp_session.call(
                     str_path, *args, **kwargs)
             except:
-                logger.error("Error while dispatching to '%s'", str_path)
+                log_noisy_error(logger, "Error while dispatching to '%s'",
+                                str_path)
                 raise
         if inspect.isawaitable(result):
             if not local_dispatch:
@@ -388,7 +391,8 @@ class NodeWAMPManager:
             await self.reg_store.add_subscription(node, node.node_context,
                                                   (str(path), handler, False))
         except WAMPApplicationError:
-            logger.error("Error while registering subscription to '%s'", path)
+            log_noisy_error(logger, "Error while registering subscription to "
+                            "'%s'", path)
             raise
 
     async def disconnect(self, node, path, handler):
@@ -400,8 +404,8 @@ class NodeWAMPManager:
             await self.reg_store.remove(node, node.node_context, str(path),
                                         handler, REG_TYPE_SUB)
         except WAMPApplicationError:
-            logger.error("Error while unregistering subscription to '%s'",
-                         path)
+            log_noisy_error(logger, "Error while unregistering subscription to "
+                            "'%s'", path)
             raise
 
     def get_point(self, node, func=None):
