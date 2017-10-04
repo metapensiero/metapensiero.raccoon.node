@@ -34,8 +34,8 @@ class Node(metaclass=SignalAndHandlerInitMeta):
     "Signal emitted when a node is added by setting an attribute to it."
 
     on_node_bind = Signal(sequential_async_handlers=True)
-    """Signal emitted at the end of node_bind() call. Every callback will
-    receive the following parameters:
+    """Signal emitted at the end of :meth:`node_bind` call. Every callback
+    will receive the following parameters:
 
     node : :class:`Node`
       the bound node
@@ -152,11 +152,11 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         super().__setattr__(name, value)
 
     async def node_bind(self, path, context=None, parent=None):
-        """Bind a node to a path, using the runtime context and optionally a
-        parent. The context is cloned so that changes to it will affect only a
-        branch.
+        """Bind a node to a `path`, using the runtime `context` and optionally
+        a `parent`. The context is cloned so that changes to it will affect
+        only a branch.
 
-        It emits an ``on_node_bind`` *synchronous* event with the following
+        It emits a `on_node_bind` *synchronous* event with the following
         keyword arguments:
 
         node : :class:`Node`
@@ -177,7 +177,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
 
         .. note:: This is now a *coroutine*
 
-          This whas changed from a normal method (with transaction tracking)
+          This was changed from a normal method (with transaction tracking)
           to a *coroutine*.
 
           In reason of this the ``on_node_bind`` was changed to be
@@ -223,12 +223,12 @@ class Node(metaclass=SignalAndHandlerInitMeta):
         return res
 
     async def node_unbind(self):
-        """Unbinds a node from a path. It emits ``on_node_unbind`` event,
+        """Unbinds a node from a path. It emits a `on_node_unbind` event,
         without parameters.
 
         .. note:: This is now a *coroutine*
 
-          This whas changed from a normal method (with transaction tracking)
+          This was changed from a normal method (with transaction tracking)
           to a *coroutine*.
         """
         if self._node_unbind_task is None:
@@ -244,7 +244,7 @@ class WAMPNode(Node, serialize.Serializable, metaclass=WAMPInitMeta):
     """A Node subclass to deal with WAMP stuff. An instance gets
     local and WAMP pub/sub, WAMP RPC and automatic tree addressing.
 
-    This is done by performing another two operations: *register* and
+    This is done by performing other two operations: *register* and
     *unregister* to be performed possibly at a different (later) time
     than the bind operation.
 
@@ -321,7 +321,7 @@ class WAMPNode(Node, serialize.Serializable, metaclass=WAMPInitMeta):
 
     async def node_register(self):
         """Register this node to the :term:`WAMP` session. It emits the
-        :attr:`on_node_register` event."""
+        `on_node_register` event."""
         if not self.node_registered and self.node_context is not None and \
            self.node_context.wamp_session is not None and \
            self.node_context.wamp_session.is_attached():
@@ -338,12 +338,13 @@ class WAMPNode(Node, serialize.Serializable, metaclass=WAMPInitMeta):
 
     async def node_unregister(self):
         """Unregisters the node from the :term:`WAMP` session. It emits the
-        :attr:`on_node_unregister` event."""
+        `on_node_unregister` event."""
         if self.node_registered:
             await self.on_node_unregister.notify(node=self,
                                                  context=self.node_context)
 
     def remote(self, path):
+        "Return a :class:`~.proxy.Proxy` instance on the given `path`."
         return Proxy(self, path)
 
 
