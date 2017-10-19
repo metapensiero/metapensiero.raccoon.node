@@ -227,9 +227,6 @@ class NodeWAMPManager:
             result = self._wrap_async(result)
         return result
 
-    def clear(self):
-        self.reg_store.clear()
-
     async def connect(self, node, path, handler):
         """Emulate signal api to connect an handler to a subscription."""
         self._com_guard(node)

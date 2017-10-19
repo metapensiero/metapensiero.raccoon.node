@@ -178,6 +178,10 @@ class WAMPBridge(ExternalSignallerAndHandler):
         src_point = signal.__get__(instance).wamp_point
         return self.manager.notify(src_point, wamp_topic, *args, **ext_kwargs)
 
+    def clear(self):
+        """Remove all the registrations from the store."""
+        self.reg_store.clear()
+
     def register_class(self, cls, bases, namespace, signals, handlers):
         """Signal API. This is called by SignalAndHandlerInitMeta.
 
