@@ -22,7 +22,6 @@
    context
    node
    path
-   proxy
    registrations
    serialize
    wamp

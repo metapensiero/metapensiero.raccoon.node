@@ -10,5 +10,14 @@
  Wamp
 ======
 
-.. automodule:: raccoon.rocky.node.wamp
-   :members:
+.. automodule:: raccoon.rocky.node.wamp.abc
+
+.. automodule:: raccoon.rocky.node.wamp.node
+
+.. automodule:: raccoon.rocky.node.wamp.manager
+
+.. automodule:: raccoon.rocky.node.wamp.signal
+
+.. automodule:: raccoon.rocky.node.wamp.proxy
+
+.. automodule:: raccoon.rocky.node.wamp.context
