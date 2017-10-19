@@ -191,9 +191,30 @@ class RegistrationStore:
         for rpc_point in item.points:
             self._items_for_node(rpc_point.node).discard(item)
 
-        """Register calls (procedures) with wamp. It expects `uri_funcs`
-        to be a tuple of ``(uri, func)`` items."""
     async def add_call(self, node, context, dispatcher, *uri_funcs):
+        """Register call (procedures) with `WAMP`:term:.
+
+        :param node: the node that *owns* the final callable endpoints
+        :param context: a node context containing `WAMP`:term: details
+        :param dispatcher: a callable that will be used as first endpoint. It
+          will be called with the following arguments:
+
+            - the `WAMP`:term:
+              `~arstecnica.raccoon.autobahn.client.ClientSession` instance
+            - an `RPCPoint` instance representing the point of origin of the
+              invocation.
+            - the URI of the of the call
+
+          the rest of the arguments will be those provided by Autobahn,
+          usually a triplet the *details* for each invocation and the data split
+          in ``args`` and ``kwargs``
+        :param uri_funcs: a tuple of ``(uri, func)`` items
+        :type node: a `~.node.WAMPNode` instance
+        :type context: a `~.context.WAMPContext` instance
+        :type dispatcher: a *callable*
+        :type uri_funcs: a sequence of two items sequences
+        :returns: a sequence of registration results
+        """
         session = context.wamp_session
         opts = node.node_context.call_registration_options or \
                RegisterOptions(details_arg='details')
@@ -220,13 +241,30 @@ class RegistrationStore:
             reg_item.add_registration(reg)
         return tuple(results)
 
-        """Register handlers (subscriptions) with wamp. It expects `uri_funcs`
-        to be a tuple of ``(uri, func)`` items.
     async def add_subscription(self, node, context, dispatcher, *uri_funcs):
+        """Register event handlers (subscribers) with `WAMP`:term:, when a new message
+        is delivered, the handler will be called with the data.
 
-        Differently than the *call* counterpart, here the same URI can appear
-        in more than one item, because it's possible to have multiple
-        subscriptions per topic.
+        :param node: the node that *owns* the final callable endpoints
+        :param context: a node context containing `WAMP`:term: details
+        :param dispatcher: a callable that will be used as first endpoint. It
+          will be called with the following arguments:
+
+            - the `WAMP`:term:
+              `~arstecnica.raccoon.autobahn.client.ClientSession` instance
+            - an `RPCPoint` instance representing the point of origin of the
+              invocation.
+            - the URI of the event
+
+          the rest of the arguments will be those provided by Autobahn,
+          usually a triplet the *details* for each invocation and the data split
+          in ``args`` and ``kwargs``
+        :param uri_funcs: a sequence of ``(uri, func, is_source)`` items
+        :type node: a `~.node.WAMPNode` instance
+        :type context: a `~.context.WAMPContext` instance
+        :type dispatcher: a *callable*
+        :type uri_funcs: a sequence of three items sequences
+        :returns: a sequence of subscription results
         """
         session = context.wamp_session
         opts = node.node_context.subscription_registration_options or \
