@@ -7,5 +7,9 @@
 #
 
 
+class ProxyError(Exception):
+    "Exception raised in `~.proxy.Proxy` code"
+
+
 class RPCError(Exception):
     "Exception raised when an RPC cannot be performed."

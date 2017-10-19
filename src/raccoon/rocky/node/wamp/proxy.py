@@ -6,12 +6,10 @@
 # :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
 #
 
-from .path import Path
-from . import serialize
+from ..path import Path
+from .. import serialize
 
-
-class ProxyError(Exception):
-    pass
+from .errors import ProxyError
 
 
 class Proxy:
