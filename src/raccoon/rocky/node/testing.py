@@ -12,8 +12,8 @@ from unittest import mock
 
 import pytest
 
-from raccoon.rocky.node import context
-from raccoon.rocky.node.wamp import node_wamp_manager
+from raccoon.rocky.node import NodeContext, WAMPNodeContext
+from raccoon.rocky.node.wamp.signal import wamp_bridge
 
 
 class FakeCallDetails:
@@ -209,7 +209,7 @@ def wamp_session(request, event_loop, global_registry):
     _old_sub_cls = regmod.StoreItem.subscription_cls
     regmod.StoreItem.registration_cls = FakeRegistration
     regmod.StoreItem.subscription_cls = FakeSubscription
-    node_wamp_manager.clear()
+    wamp_bridge.clear()
     yield fake_session
     regmod.StoreItem.registration_cls = _old_reg_cls
     regmod.StoreItem.subscription_cls = _old_sub_cls
@@ -223,7 +223,7 @@ def wamp_session2(request, event_loop, global_registry):
 
 @pytest.fixture(scope='function')
 def wamp_context(wamp_session, event_loop):
-    return context.WAMPNodeContext(
+    return WAMPNodeContext(
         event_loop,
         wamp_session=wamp_session
     )
@@ -231,7 +231,7 @@ def wamp_context(wamp_session, event_loop):
 
 @pytest.fixture(scope='function')
 def wamp_context2(wamp_session2, event_loop):
-    return context.WAMPNodeContext(
+    return WAMPNodeContext(
         event_loop,
         wamp_session=wamp_session2
     )
@@ -239,7 +239,7 @@ def wamp_context2(wamp_session2, event_loop):
 
 @pytest.fixture(scope='function')
 def node_context(event_loop):
-    return context.NodeContext(
+    return NodeContext(
         event_loop
     )
 

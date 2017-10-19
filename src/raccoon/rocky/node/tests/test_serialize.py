@@ -9,8 +9,8 @@
 import pytest
 
 from metapensiero.signal import handler, Signal
-from raccoon.rocky.node import call, Path, serialize, WAMPNode
-from raccoon.rocky.node.proxy import Proxy
+from raccoon.rocky.node import Path, serialize
+from raccoon.rocky.node.wamp import call, Proxy, WAMPNode
 
 
 @serialize.define('test.Simple', allow_subclasses=True)

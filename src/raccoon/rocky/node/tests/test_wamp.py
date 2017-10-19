@@ -11,10 +11,8 @@ import pytest
 from unittest.mock import patch
 
 from metapensiero.signal import Signal, handler
-from raccoon.rocky.node.context import WAMPNodeContext
 from raccoon.rocky.node.path import Path
-from raccoon.rocky.node.wamp import (call, WAMPInitMeta, AbstractWAMPNode,
-                                     node_wamp_manager)
+from raccoon.rocky.node.wamp import call, WAMPInitMeta, AbstractWAMPNode
 
 
 class FakeNode(metaclass=WAMPInitMeta):

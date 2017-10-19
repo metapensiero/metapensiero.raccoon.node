@@ -234,6 +234,7 @@ class NodeWAMPManager:
             path = node.node_path.resolve(path, node.node_context)
         try:
             await self.reg_store.add_subscription(node, node.node_context,
+                                                  self.dispatch_event,
                                                   (str(path), handler, False))
         except WAMPApplicationError:
             log_noisy_error(logger, "Error while registering subscription to "

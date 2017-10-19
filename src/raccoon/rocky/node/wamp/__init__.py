@@ -28,6 +28,7 @@ NOISY_ERROR_LOGGER = logging.Logger.error
 def log_noisy_error(logger, *args, **kwargs):
     NOISY_ERROR_LOGGER(logger, *args, **kwargs)
 
+from .abc import AbstractWAMPNode
 from .context import WAMPNodeContext
 from .deco import call
 from .node import WAMPNode
@@ -35,6 +36,7 @@ from .proxy import Proxy
 from .signal import WAMPInitMeta
 
 __all__ = (
+    'AbstractWAMPNode',
     'Proxy',
     'WAMPInitMeta',
     'WAMPNode',
