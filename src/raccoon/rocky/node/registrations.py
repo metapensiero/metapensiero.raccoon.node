@@ -170,22 +170,11 @@ class StoreItem:
 
 class RegistrationStore:
     """A registry for RPC end points, either *calls* or *subscriptions*.
-
-    :type call_dispatcher: callable
-    :param call_dispatcher: the responsible of dispatching an RPC call: it
-      must be a function accepting at least two arguments, a *session* and an
-      *uri*
-    :type event_dispatcher: callable
-    :param event_dispatcher: the responsible of dispatching an RPC event: it
-      must be a function accepting at least three arguments, a *session*, a
-      *source point* and an *uri*
     """
 
-    def __init__(self, call_dispatcher, event_dispatcher):
+    def __init__(self):
         self.uri_to_item = {RegistrationType.CALL: {}, RegistrationType.SUB: {}}
         self.node_to_items = {}
-        self.call_dispatcher = call_dispatcher
-        self.event_dispatcher = event_dispatcher
 
     def _index(self, item, remove=False):
         if remove:
@@ -202,9 +191,9 @@ class RegistrationStore:
         for rpc_point in item.points:
             self._items_for_node(rpc_point.node).discard(item)
 
-    async def add_call(self, node, context, *uri_funcs):
         """Register calls (procedures) with wamp. It expects `uri_funcs`
         to be a tuple of ``(uri, func)`` items."""
+    async def add_call(self, node, context, dispatcher, *uri_funcs):
         session = context.wamp_session
         opts = node.node_context.call_registration_options or \
                RegisterOptions(details_arg='details')
@@ -216,9 +205,9 @@ class RegistrationStore:
             point = reg_item.add_point(node, func, is_source=True)
             results.append(point)
             reg_items.append(reg_item)
-            dispatcher = partial(self.call_dispatcher, session, uri)
+            disp = partial(dispatcher, session, uri)
             coro = session.register(
-                dispatcher,
+                disp,
                 uri,
                 options=opts
             )
@@ -231,9 +220,9 @@ class RegistrationStore:
             reg_item.add_registration(reg)
         return tuple(results)
 
-    async def add_subscription(self, node, context, *uri_funcs):
         """Register handlers (subscriptions) with wamp. It expects `uri_funcs`
         to be a tuple of ``(uri, func)`` items.
+    async def add_subscription(self, node, context, dispatcher, *uri_funcs):
 
         Differently than the *call* counterpart, here the same URI can appear
         in more than one item, because it's possible to have multiple
@@ -260,10 +249,10 @@ class RegistrationStore:
                 results.add((ix, point))
                 if not reg_item.registration(session):
                     reg_item.add_registration_pending(session)
-                    dispatcher = partial(self.event_dispatcher, session,
-                                         RPCPoint(node), uri)
+                    disp = partial(dispatcher, session,
+                                   RPCPoint(node), uri)
                     coro = session.subscribe(
-                        dispatcher,
+                        disp,
                         uri,
                         options=opts
                     )
