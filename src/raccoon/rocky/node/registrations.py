@@ -208,11 +208,11 @@ class RegistrationStore:
           the rest of the arguments will be those provided by Autobahn,
           usually a triplet the *details* for each invocation and the data split
           in ``args`` and ``kwargs``
-        :param uri_funcs: a tuple of ``(uri, func)`` items
-        :type node: a `~.node.WAMPNode` instance
-        :type context: a `~.context.WAMPContext` instance
+        :param \*uri_funcs: a tuple of ``(uri, func)`` items
+        :type node: a `~.wamp.node.WAMPNode` instance
+        :type context: a `~.wamp.context.WAMPContext` instance
         :type dispatcher: a *callable*
-        :type uri_funcs: a sequence of two items sequences
+        :type \*uri_funcs: a sequence of two items sequences
         :returns: a sequence of registration results
         """
         session = context.wamp_session
@@ -259,11 +259,11 @@ class RegistrationStore:
           the rest of the arguments will be those provided by Autobahn,
           usually a triplet the *details* for each invocation and the data split
           in ``args`` and ``kwargs``
-        :param uri_funcs: a sequence of ``(uri, func, is_source)`` items
-        :type node: a `~.node.WAMPNode` instance
-        :type context: a `~.context.WAMPContext` instance
+        :param \*uri_funcs: a sequence of ``(uri, func, is_source)`` items
+        :type node: a `~.wamp.node.WAMPNode` instance
+        :type context: a `~.wamp.context.WAMPContext` instance
         :type dispatcher: a *callable*
-        :type uri_funcs: a sequence of three items sequences
+        :type \*uri_funcs: a sequence of three items sequences
         :returns: a sequence of subscription results
         """
         session = context.wamp_session
