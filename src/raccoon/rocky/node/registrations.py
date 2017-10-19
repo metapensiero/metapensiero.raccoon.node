@@ -7,6 +7,7 @@
 #
 
 import asyncio
+import enum
 from functools import partial
 from weakref import WeakKeyDictionary, WeakValueDictionary
 
@@ -14,8 +15,10 @@ from autobahn.wamp.request import Subscription, Registration
 from autobahn.wamp.types import SubscribeOptions, RegisterOptions
 
 
-REG_TYPE_CALL = 'call'
-REG_TYPE_SUB = 'subscription'
+class RegistrationType(enum.Enum):
+
+    CALL = 1
+    SUB = 2
 
 
 class RPCPointMeta(type):
@@ -98,7 +101,7 @@ class StoreItem:
                 ))
 
     def add_point(self, node, func, is_source=False):
-        if self.type == REG_TYPE_CALL and len(self) > 0:
+        if self.type == RegistrationType.CALL and len(self) > 0:
             raise ValueError('Uri already registered')
         result = RPCPoint(node, func, self, is_source=is_source)
         self.points.add(result)
@@ -110,9 +113,9 @@ class StoreItem:
         if reg.session in self.regs and self.regs[reg.session] != 'pending':
             raise ValueError("This item has a registration already")
         self.regs[reg.session] = reg
-        if not (((self.type == REG_TYPE_CALL) and
+        if not (((self.type == RegistrationType.CALL) and
             isinstance(reg, self.registration_cls)) or
-           ((self.type == REG_TYPE_SUB) and
+           ((self.type == RegistrationType.SUB) and
             isinstance(reg, self.subscription_cls))):
             raise ValueError("Registration type unknown")
         if self.store:
@@ -157,9 +160,9 @@ class StoreItem:
         res = None
         if self.regs and session in self.regs:
             reg = self.regs[session]
-            if self.type == REG_TYPE_CALL:
+            if self.type == RegistrationType.CALL:
                 res = await reg.unregister()
-            elif self.type == REG_TYPE_SUB:
+            elif self.type == RegistrationType.SUB:
                 res = await reg.unsubscribe()
             del self.regs[session]
         return res
@@ -179,7 +182,7 @@ class RegistrationStore:
     """
 
     def __init__(self, call_dispatcher, event_dispatcher):
-        self.uri_to_item = {REG_TYPE_CALL: {}, REG_TYPE_SUB: {}}
+        self.uri_to_item = {RegistrationType.CALL: {}, RegistrationType.SUB: {}}
         self.node_to_items = {}
         self.call_dispatcher = call_dispatcher
         self.event_dispatcher = event_dispatcher
@@ -209,7 +212,7 @@ class RegistrationStore:
         results = []
         reg_items = []
         for uri, func in uri_funcs:
-            reg_item = self.get(uri, REG_TYPE_CALL)
+            reg_item = self.get(uri, RegistrationType.CALL)
             point = reg_item.add_point(node, func, is_source=True)
             results.append(point)
             reg_items.append(reg_item)
@@ -252,7 +255,7 @@ class RegistrationStore:
         results = set()
         for uri, points in uri_map.items():
             for ix, func, is_source in points:
-                reg_item = self.get(uri, REG_TYPE_SUB)
+                reg_item = self.get(uri, RegistrationType.SUB)
                 point = reg_item.add_point(node, func, is_source=is_source)
                 results.add((ix, point))
                 if not reg_item.registration(session):
@@ -297,7 +300,7 @@ class RegistrationStore:
         :param type_: the kind of RPC, either ``"call"`` or ``"subscription"``
         :return: a :class:`StoreItem` instance with requested information
         """
-        assert type_ in (REG_TYPE_CALL, REG_TYPE_SUB)
+        assert isinstance(type_, RegistrationType)
         assert isinstance(uri, str)
         if uri not in self.uri_to_item[type_]:
             self.uri_to_item[type_][uri] = StoreItem(self, uri, type_)
