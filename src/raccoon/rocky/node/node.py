@@ -27,10 +27,10 @@ class NodeError(Exception):
 class Node(metaclass=SignalAndHandlerInitMeta):
     """The node is the base building block of Rocky.
     """
-    on_node_add = Signal(sequential_async_handlers=True)
+    on_node_add = Signal()
     "Signal emitted when a node is added by setting an attribute to it."
 
-    on_node_bind = Signal(sequential_async_handlers=True)
+    on_node_bind = Signal()
     """Signal emitted at the end of :meth:`node_bind` call. Every callback
     will receive the following parameters:
 
@@ -44,8 +44,7 @@ class Node(metaclass=SignalAndHandlerInitMeta):
       the parent node
     """
 
-    on_node_unbind = Signal(sequential_async_handlers=True,
-                            sort_mode=Signal.SORT_MODE.TOPDOWN)
+    on_node_unbind = Signal(sort_mode=Signal.SORT_MODE.TOPDOWN)
     """Signal emitted at the end of :meth:`node_unbind` call. Every callback
     will receive the same parameters as the `on_node_bind` signal.
     """
