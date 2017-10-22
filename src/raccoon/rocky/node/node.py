@@ -131,7 +131,6 @@ class Node(metaclass=SignalAndHandlerInitMeta):
                                          parent=self.node_parent)
         await self._node_unbind()
 
-
     @property
     def loop(self):
         """Returns the asyncio loop for this node."""
