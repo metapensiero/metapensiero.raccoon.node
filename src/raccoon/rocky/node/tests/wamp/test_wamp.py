@@ -41,6 +41,7 @@ class FakeNode(metaclass=WAMPInitMeta):
         await self.on_node_unregister.notify(node=self,
                                              context=self.node_context)
 
+
 AbstractWAMPNode.register(FakeNode)
 
 
@@ -82,12 +83,12 @@ async def test_register_and_call_rpc(wamp_context, event_loop):
 
 
 @pytest.mark.asyncio
-async def test_subscriber_and_publisher(wamp_context, wamp_context2, event_loop):
+async def test_subscriber_and_publisher(wamp_context, wamp_context2,
+                                        event_loop):
 
     class RPCTest(FakeNode):
 
         on_test_event = Signal()
-
 
     class RPCTest2(FakeNode):
 
