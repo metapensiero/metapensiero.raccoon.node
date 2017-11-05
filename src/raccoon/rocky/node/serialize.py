@@ -165,16 +165,16 @@ class Registry:
         self._cls_to_definition = {}
 
     def add_registration(self, definition):
-        """Add a definition to the registry. This is automatically called by each
-        definition instance.
+        """Add a definition to the registry. This is automatically called by
+        each definition instance.
 
         :param definition: an instance of `SerializationDefinition`
         """
         assert (definition.serialization_id is not None and
                 isinstance(definition.serialization_id, str))
         if definition.serialization_id in self._id_to_definition:
-            raise SerializationError(f"The id '{definition.serialization_id}' is taken "
-                                     f"already")
+            raise SerializationError(f"The id '{definition.serialization_id}'"
+                                     f" is taken already")
         assert definition.cls is not None
         if definition.cls in self._cls_to_definition:
             raise SerializationError(f"Class {definition.cls.__name__} is "
