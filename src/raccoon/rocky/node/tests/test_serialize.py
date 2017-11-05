@@ -10,7 +10,7 @@ import pytest
 
 from metapensiero.signal import handler, Signal
 from raccoon.rocky.node import Path, serialize
-from raccoon.rocky.node.wamp import call, Proxy, WAMPNode
+#from raccoon.rocky.node.wamp import call, Proxy, WAMPNode
 
 
 @serialize.define('test.Simple', allow_subclasses=True)
@@ -130,86 +130,86 @@ def test_serialize_ext():
     assert inst2 == inst
 
 
-@pytest.mark.asyncio
-async def test_serialize_node_same_session_no_serialization(
-        wamp_context, event_loop, events):
+# @pytest.mark.asyncio
+# async def test_serialize_node_same_session_no_serialization(
+#         wamp_context, event_loop, events):
 
-    events.define('asignal')
+#     events.define('asignal')
 
-    class RPCTest(WAMPNode):
+#     class RPCTest(WAMPNode):
 
-        asignal = Signal()
+#         asignal = Signal()
 
-        @call
-        def callee(self):
-            return self
+#         @call
+#         def callee(self):
+#             return self
 
-        @handler('asignal')
-        def store_incoming(self, node):
-            events.asignal.set()
-            self.node = node
+#         @handler('asignal')
+#         def store_incoming(self, node):
+#             events.asignal.set()
+#             self.node = node
 
-    class RPCTest2(WAMPNode):
+#     class RPCTest2(WAMPNode):
 
-        async def caller(self):
-            return await self.call('@test.callee')
+#         async def caller(self):
+#             return await self.call('@test.callee')
 
-    base = Path('raccoon')
-    path = Path('test', base)
-    path2 = Path('test2', base)
-    rpc_test = RPCTest()
-    await rpc_test.node_bind(path, wamp_context)
-    rpc_test2 = RPCTest2()
-    await rpc_test2.node_bind(path2, wamp_context)
+#     base = Path('raccoon')
+#     path = Path('test', base)
+#     path2 = Path('test2', base)
+#     rpc_test = RPCTest()
+#     await rpc_test.node_bind(path, wamp_context)
+#     rpc_test2 = RPCTest2()
+#     await rpc_test2.node_bind(path2, wamp_context)
 
-    res = await rpc_test2.caller()
-    assert res is rpc_test
+#     res = await rpc_test2.caller()
+#     assert res is rpc_test
 
-    rpc_test2.remote('@test').asignal.notify(rpc_test2)
-    await events.wait_for(events.asignal, 5)
-    assert rpc_test.node is rpc_test2
+#     rpc_test2.remote('@test').asignal.notify(rpc_test2)
+#     await events.wait_for(events.asignal, 5)
+#     assert rpc_test.node is rpc_test2
 
 
-@pytest.mark.asyncio
-async def test_serialize_node_two_sessions_do_serialize(
-        wamp_context,  wamp_context2, event_loop, events):
+# @pytest.mark.asyncio
+# async def test_serialize_node_two_sessions_do_serialize(
+#         wamp_context,  wamp_context2, event_loop, events):
 
-    events.define('asignal')
+#     events.define('asignal')
 
-    class RPCTest(WAMPNode):
+#     class RPCTest(WAMPNode):
 
-        asignal = Signal()
+#         asignal = Signal()
 
-        @call
-        def callee(self):
-            return self
+#         @call
+#         def callee(self):
+#             return self
 
-        @handler('asignal')
-        def store_incoming(self, node):
-            events.asignal.set()
-            self.node = node
+#         @handler('asignal')
+#         def store_incoming(self, node):
+#             events.asignal.set()
+#             self.node = node
 
-    class RPCTest2(WAMPNode):
+#     class RPCTest2(WAMPNode):
 
-        async def caller(self):
-            return await self.call('@test.callee')
+#         async def caller(self):
+#             return await self.call('@test.callee')
 
-    base = Path('raccoon')
-    path = Path('test', base)
-    path2 = Path('test2', base)
-    rpc_test = RPCTest()
-    rpc_test.name = 'rpc_test'
-    await rpc_test.node_bind(path, wamp_context)
-    rpc_test2 = RPCTest2()
-    await rpc_test2.node_bind(path2, wamp_context2)
+#     base = Path('raccoon')
+#     path = Path('test', base)
+#     path2 = Path('test2', base)
+#     rpc_test = RPCTest()
+#     rpc_test.name = 'rpc_test'
+#     await rpc_test.node_bind(path, wamp_context)
+#     rpc_test2 = RPCTest2()
+#     await rpc_test2.node_bind(path2, wamp_context2)
 
-    res = await rpc_test2.caller()
-    assert res is not rpc_test
-    assert isinstance(res, Proxy)
-    assert res.node_path == path
+#     res = await rpc_test2.caller()
+#     assert res is not rpc_test
+#     assert isinstance(res, Proxy)
+#     assert res.node_path == path
 
-    rpc_test2.remote('@test').asignal.notify(rpc_test2)
-    await events.wait_for(events.asignal, 5)
-    assert rpc_test.node is not rpc_test2
-    assert isinstance(rpc_test.node, Proxy)
-    assert rpc_test.node.node_path == path2
+#     rpc_test2.remote('@test').asignal.notify(rpc_test2)
+#     await events.wait_for(events.asignal, 5)
+#     assert rpc_test.node is not rpc_test2
+#     assert isinstance(rpc_test.node, Proxy)
+#     assert rpc_test.node.node_path == path2

@@ -8,29 +8,29 @@
 
 import pytest
 
-from raccoon.rocky.node.registrations import RPCPoint
+from raccoon.rocky.node.registry import EndPoint
 
 
-class FakeContext:
+# class FakeContext:
 
-    wamp_session = object()
+#     wamp_session = object()
 
 
-class FakeNode:
+# class FakeNode:
 
-    node_context = FakeContext()
+#     node_context = FakeContext()
 
-    def foo(self):
-        pass
+#     def foo(self):
+#         pass
 
-def test_endpointdefs():
+# def test_endpointdefs():
 
-    node = FakeNode()
-    epd = RPCPoint(node, node.foo)
-    store = set([epd])
+#     node = FakeNode()
+#     epd = RPCPoint(node, node.foo)
+#     store = set([epd])
 
-    assert epd in store
+#     assert epd in store
 
-    epd2 = RPCPoint(node, node.foo)
+#     epd2 = RPCPoint(node, node.foo)
 
-    assert epd2 in store
+#     assert epd2 in store
