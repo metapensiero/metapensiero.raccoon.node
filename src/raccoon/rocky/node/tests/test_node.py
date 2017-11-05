@@ -111,7 +111,7 @@ async def test_node_unbind(node_context):
     assert not hasattr(parent, 'n20')
 
 
-async def test_node_unbind_runs_only_one_time():
+async def test_node_unbind_runs_only_one_time(node_context):
 
     class MyNode(Node):
 
@@ -122,6 +122,8 @@ async def test_node_unbind_runs_only_one_time():
 
 
     my_node = MyNode()
+
+    await my_node.node_bind('test.it', node_context)
 
     async def unbind_it(node):
         await node.node_unbind()

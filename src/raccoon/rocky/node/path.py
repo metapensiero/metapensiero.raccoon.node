@@ -27,13 +27,19 @@ def norm_path(value, full=False):
         if value.base is not None and full:
             normalized = value.base._path + normalized
     else:
-        if isinstance(value, abc.Sequence) and isinstance(value, str):
-            value = value.split(PATHSEP)
-        if not isinstance(value, tuple):
+        if isinstance(value, abc.Sequence):
+            if isinstance(value, str):
+                value = value.split(PATHSEP)
+            if not isinstance(value, tuple):
+                value = tuple(value)
+        elif isinstance(value, abc.Iterable):
             value = tuple(value)
+        else:
+            raise ValueError(f"Invalid value {value!r}")
         normalized = value
+    if len(normalized) == 0:
+        raise ValueError("Empty value")
     return normalized
-
 
 
 class PathError(Exception):
@@ -50,7 +56,9 @@ class PathMeta(type(serialize.Serializable)):
         if not path:
             raise PathError("'path' must have a value")
         elif isinstance(path, cls) and not base:
-            reg[(path._path, base)] = path
+            assert ((path._path, base) in reg and reg[(path._path, base)] is
+                    path), ("Path instance is not registered for path "
+                            "{!r}".format(path))
             return path
         elif isinstance(path, cls) and base:
             raise PathError("Cannot be both Path instances")

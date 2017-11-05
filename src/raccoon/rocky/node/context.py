@@ -8,6 +8,8 @@
 
 import asyncio
 
+from .registry import Registry
+from .dispatch import Dispatcher
 
 undefined = object()
 
@@ -18,13 +20,20 @@ class NodeContext:
     instances.
     """
 
-    CONFIG_KEYS = ['loop', 'path_resolvers']
+    CONFIG_KEYS = ['loop', 'path_resolvers', 'registry', 'dispatcher']
     """A list of members that are always present."""
 
-    def __init__(self, loop=None, path_resolvers=None):
+    def __init__(self, loop=None, path_resolvers=None, registry=None,
+                 dispatcher=None):
         self._parent_context = None
         self.loop = loop or asyncio.get_event_loop()
         self.path_resolvers = path_resolvers or []
+        if registry is None:
+            registry = Registry()
+        self.registry = registry
+        if dispatcher is None:
+            dispatcher = Dispatcher(registry)
+        self.dispatcher = dispatcher
 
     def __contains__(self, item):
         return getattr(self, item, undefined) is not undefined
