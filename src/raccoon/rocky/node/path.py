@@ -130,8 +130,7 @@ class Path(serialize.Serializable, metaclass=PathMeta):
         return self.path[index]
 
     def __hash__(self):
-        return hash((self._path,
-                     self.base if self.base is not self else None))
+        return hash(norm_path(self, full=True))
 
     def __len__(self):
         return len(self.path)
