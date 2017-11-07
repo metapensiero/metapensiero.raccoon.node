@@ -116,10 +116,10 @@ class EndPoint(metaclass=PointMeta):
     is_source = False
     remote = False
     managed = False
-    rpc_record = None
 
     def __init__(self, key):
         self.key = key
+        self.rpc_records = set()
 
     def __eq__(self, other):
         return (isinstance(other, EndPoint) and
@@ -129,13 +129,26 @@ class EndPoint(metaclass=PointMeta):
         return self.key.__hash__()
 
     def __repr__(self):
-        return "<{} for node '{}' and func '{}', is source: '{}'>".format(
-            self.__class__.__name__, self.owner, self.path, self.is_source
-        )
+        return ("<%s for owner %r is source: %r>" % (
+            self.__class__.__name__, self.owner, self.is_source
+        ))
+
+    def _adapt_call_params(self, func, args, kwargs):
+        signature = inspect.signature(func, follow_wrapped=False)
+        has_varkw = any(p.kind == inspect.Parameter.VAR_KEYWORD
+                        for n, p in signature.parameters.items())
+        if has_varkw:
+            bind = signature.bind_partial(*args, **kwargs)
+        else:
+            bind = signature.bind_partial(*args,
+                                          **{k: v for k, v in kwargs.items()
+                                             if k in signature.parameters})
+            bind.apply_defaults()
+        return bind
 
     def attach(self, rpc_record):
         """Attach to the rpc record"""
-        if self.is_attached:
+        if rpc_record in self.rpc_records:
             raise RPCError("Already attached")
         rpc_record.add(self)
         self.active = True
@@ -152,7 +165,7 @@ class EndPoint(metaclass=PointMeta):
 
     @property
     def is_attached(self):
-        return self.rpc_record is not None
+        return len(self.rpc_records) > 0
 
     @property
     def owner(self):
@@ -191,6 +204,12 @@ class SignalPoint(EndPoint):
 
     KEY_CLS = SignalKey
     is_source = True
+
+
+    def __repr__(self):
+        return ("<%s for owner %r and signal %r, is source: %r>" % (
+            self.__class__.__name__, self.owner, self.signal, self.is_source
+        ))
 
     @property
     def signal(self):
@@ -234,11 +253,25 @@ class HandlerPoint(EndPoint):
 
     KEY_CLS = HandlerKey
 
+    def __repr__(self):
+        return ("<%s for owner %r and handler (%r, %r), is source: %r>" % (
+            self.__class__.__name__, self.owner, self.fself, self.func,
+            self.is_source
+        ))
+
     def call(self, *args, **kwargs):
-        if self.key.self is None:
-            return self.key.func(*args, **kwargs)
-        else:
-            return self.key.func(self.key.self, *args, **kwargs)
+        if self.fself is not None:
+            args = (self.fself,) + args
+        bind = self._adapt_call_params(self.func, args, kwargs)
+        return self.func(*bind.args, **bind.kwargs)
+
+    @property
+    def func(self):
+        return self.key.func
+
+    @property
+    def fself(self):
+        return self.key.self
 
 
 class CallKey(HandlerKey):

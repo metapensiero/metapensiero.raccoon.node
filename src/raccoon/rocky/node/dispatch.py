@@ -9,7 +9,7 @@
 from collections import namedtuple
 import enum
 
-from metapensiero.signal import MultipleResults
+from metapensiero.signal import Executor
 
 from .errors import DispatchError
 from .path import Path
@@ -25,8 +25,8 @@ class DispatchFlags(enum.Enum):
 
 
 class DispatchDetails(namedtuple(
-        'DispatchDetailsNT', ('dispatch_type', 'src_point', 'dst_path','flags',
-                              'args', 'kwargs'))):
+        'DispatchDetailsNT', ('dispatch_type', 'src_point', 'dst_path',
+                              'flags', 'args', 'kwargs'))):
     """Contains the details of a dispatch."""
 
     def __new__(cls, dispatch_type, src_point, dst_path, *flags, args=None,
@@ -54,7 +54,8 @@ class Dispatcher:
         self.registry = registry
 
     def _get_dispatch_method(self, disp_type):
-        meth = getattr(self, 'dispatch_{}'.format(disp_type.name.lower()), None)
+        meth = getattr(self, 'dispatch_{}'.format(disp_type.name.lower()),
+                       None)
         return meth
 
     def dispatch(self, details):
@@ -81,6 +82,6 @@ class Dispatcher:
 
     def dispatch_event(self, details, dst_points):
         # case when the source is the signal/event
-        return MultipleResults(p.call(*details.args, **details.kwargs)
-                               for p in dst_points
-                               if p is not details.src_point)
+        return Executor((p.call for p in dst_points
+                         if p is not details.src_point), owner=self,
+                        adapt_params=False)(*details.args, **details.kwargs)

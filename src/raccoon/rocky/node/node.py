@@ -10,12 +10,14 @@ import asyncio
 import logging
 
 from metapensiero.signal import MultipleResults, Signal
+from metapensiero.signal.utils import pull_result
 
 from .abc import AbstractNode
 from .context import NodeContext
+from .dispatch import DispatchDetails
 from .errors import NodeError
 from .path import Path
-from .registry import CallKey, HandlerKey, SignalKey
+from .registry import CallKey, HandlerKey, OwnerKey, RPCType, SignalKey
 from .signal import NodeInitMeta
 from . import utils
 
@@ -179,6 +181,34 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
         if parent is not None and isinstance(parent, Node):
             parent.on_node_unbind.connect(self._node_on_parent_unbind)
 
+    def _node_connect(self, path, handler, disconnect=False):
+        if self.node_path is None:
+            raise NodeError(
+                "%sconnect() is not allowed until binding happens." %
+                ('dis' if disconnect else ''))
+        ctx = self.node_context
+        assert ctx is not None
+        if isinstance(path, str):
+            path = self.node_path.resolve(path, ctx)
+        if disconnect:
+            meth = ctx.registry.remove_point
+        else:
+            meth = ctx.registry.add_point
+        return meth(HandlerKey(self, handler).point(), path)
+
+    def _node_dispatch(self, dispatch_type, dst_path, *flags, args=None,
+                       kwargs=None):
+        if self.node_path is None:
+            raise NodeError("Dispatch is not allowed until binding happens.")
+        ctx = self.node_context
+        assert ctx is not None
+        src_point = OwnerKey(self).point()
+        if isinstance(dst_path, str):
+            dst_path = self.node_path.resolve(dst_path, ctx)
+        details = DispatchDetails(dispatch_type, src_point, dst_path, *flags,
+                                  args=args, kwargs=kwargs)
+        return ctx.dispatcher.dispatch(details)
+
     async def _node_on_parent_unbind(self, **_):
         self.node_parent.on_node_unbind.disconnect(self._node_on_parent_unbind)
         await self.node_unbind()
@@ -195,8 +225,8 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
             try:
                 for name, sig in signals_data.items():
                     sig_path = utils.calc_signal_path(path, sig, name)
-                    points.add(registry.add_point(sig_path,
-                                                  SignalKey(self, sig).point()))
+                    points.add(registry.add_point(SignalKey(self, sig).point(),
+                                                  sig_path))
             except Exception as e:
                 if __debug__:
                     logger.exception("Error while binding signals")
@@ -210,8 +240,8 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
                 for name, meth in handler_endpoints.items():
                     hand_path = utils.calc_handler_target_path(path, context,
                                                                name)
-                    points.add(registry.attach_point(
-                        hand_path, HandlerKey(self, meth).point()))
+                    points.add(registry.add_point(
+                        HandlerKey(self, meth).point(), hand_path))
             except Exception as e:
                 if __debug__:
                     logger.exception("Error while binding handlers")
@@ -224,8 +254,8 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
                                                               calls_data)
                 for name, meth in call_endpoints.items():
                     hand_path = utils.calc_call_path(path, context, name)
-                    points.add(registry.attach_point(hand_path,
-                        CallKey(self, meth).point()))
+                    points.add(registry.add_point(CallKey(self, meth).point(),
+                                                  hand_path))
             except Exception as e:
                 if __debug__:
                     logger.exception("Error while binding calls")
@@ -277,7 +307,8 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
     async def _node_unregister(self):
         registry = self.node_context.registry
         points = registry.points_for_owner(self)
-        detached_points = await MultipleResults(registry.detach_point(p)
+
+        detached_points = await MultipleResults(registry.remove_point(p)
                                                 for p in points)
         await self.on_node_unregister.notify(
             node=self, path=self.node_path, context=self.node_context,
@@ -344,6 +375,10 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
                                        path=self.node_path,
                                        parent=self.node_parent)
 
+    async def node_call(self, path, *args, **kwargs):
+        return await pull_result(
+            self._node_dispatch(RPCType.CALL, path, args=args, kwargs=None))
+
     def node_child_on_unbind(self, node, path, parent):
         """Called when a child node unbind itself, by default it will remove
         the attribute reference on it.
@@ -351,10 +386,24 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
         self._node_remove_child(node)
         node.on_node_unbind.disconnect(self.node_child_on_unbind)
 
+    async def node_connect(self, path, handler):
+        return await self._node_connect(path, handler)
+
+    async def node_disconnect(self, path, handler):
+        return await self._node_connect(path, handler, disconnect=True)
+
     @property
     def node_name(self):
         """Returns the name of this node, the last part of its path."""
         return self.node_path._path[-1] if self.node_path is not None else None
+
+    def node_notify(self, path, *args, **kwargs):
+        return self._node_dispatch(RPCType.EVENT, path, args=args,
+                                   kwargs=None)
+
+    def node_notify_nowait(self, path, *args, **kwargs):
+        result = self.node_notify(path, *args, **kwargs)
+        return asyncio.ensure_future(result, loop=self.loop)
 
     async def node_remove(self, name):
         """Removes a child node."""

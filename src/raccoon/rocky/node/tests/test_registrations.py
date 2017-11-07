@@ -8,29 +8,41 @@
 
 import pytest
 
-from raccoon.rocky.node.registry import EndPoint
+from raccoon.rocky.node import Path
+from raccoon.rocky.node.registry import (EndPoint, HandlerKey, Registry,
+                                         RPCRecord, RPCType)
 
 
-# class FakeContext:
+class FakeNode:
 
-#     wamp_session = object()
+    def foo(self):
+        pass
 
 
-# class FakeNode:
 
-#     node_context = FakeContext()
+@pytest.mark.asyncio
+async def test_registry():
+    reg = Registry()
 
-#     def foo(self):
-#         pass
+    fn = FakeNode()
+    point = HandlerKey(fn, fn.foo).point()
+    await reg.add_point(point, 'test.foo')
+    p = Path('test.foo')
 
-# def test_endpointdefs():
+    assert p in reg
+    record = reg[p]
+    assert point in record.points.values()
 
-#     node = FakeNode()
-#     epd = RPCPoint(node, node.foo)
-#     store = set([epd])
+    await reg.remove_point(point)
+    assert p not in reg
 
-#     assert epd in store
 
-#     epd2 = RPCPoint(node, node.foo)
-
-#     assert epd2 in store
+def test_record():
+    fn = FakeNode()
+    point = HandlerKey(fn, fn.foo).point()
+    p = Path('test.foo')
+    record = RPCRecord(p)
+    point.attach(record)
+    assert point in record[fn]
+    assert point in record[RPCType.EVENT]
+    assert point is record[HandlerKey(fn, fn.foo)]

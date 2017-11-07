@@ -12,6 +12,7 @@ import pytest
 
 from raccoon.rocky.node import NodeContext
 
+
 @pytest.fixture(scope='function')
 def node_context(event_loop):
     return NodeContext(
@@ -40,12 +41,14 @@ class EventFactory:
             event = getattr(self, name)
         return event
 
-    def wait(self, *exclude, timeout=None):
+    async def wait(self, *exclude, timeout=None):
         exclude = set(exclude)
-        return asyncio.wait(
-            map(lambda e: e.wait(),
-            self.events - exclude), timeout=timeout,
-            loop=self.loop)
+        done, pending = await asyncio.wait(
+            map(lambda e: e.wait(), self.events - exclude),
+            timeout=timeout, loop=self.loop)
+        if len(pending) > 0:
+            raise asyncio.TimeoutError("Timeout reached")
+        return done, pending
 
     def reset(self):
         for e in self.events:
@@ -64,3 +67,13 @@ class EventFactory:
 @pytest.fixture(scope='function')
 def events(event_loop):
     return EventFactory(event_loop)
+
+
+def start_trepan():
+    from trepan.interfaces import server as Mserver
+    from trepan.api import debug
+    connection_opts={'IO': 'TCP', 'PORT': 1955}
+    intf = Mserver.ServerInterface(connection_opts=connection_opts)
+    dbg_opts = {'interface': intf}
+    print('Starting TCP server listening on port 1955.')
+    debug(dbg_opts=dbg_opts)

@@ -31,7 +31,8 @@ def _log(logger, message, *args, **kw):
 
 
 class CollectionDescriptor:
-    """A simple descriptor to initialize and store a collection per instance."""
+    """A simple descriptor to initialize and store a collection per
+    instance."""
 
     name = None
     """The name of the descriptor"""

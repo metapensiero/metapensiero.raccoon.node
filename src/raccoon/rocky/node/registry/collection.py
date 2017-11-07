@@ -8,6 +8,8 @@
 
 from collections import defaultdict
 
+from metapensiero.signal.utils import pull_result
+
 from ..path import Path
 
 from .record import RPCRecord
@@ -42,25 +44,25 @@ class Registry:
 
     def _unindex(self, rpc_record):
         for owner in rpc_record.owners:
-            self.owner_to_records[owner].remove(rpc_record)
+            self.owner_to_records[owner].discard(rpc_record)
             if len(self.owner_to_records[owner]) == 0:
                 del self.owner_to_records[owner]
 
-    def add_point(self, path, point):
+    async def add_point(self, point, path):
         if not isinstance(path, Path):
             path = Path(path)
         record = self.get(path)
         if record is None:
             record = RPCRecord(path)
+            record.registry = self
             self.path_to_record[path] = record
-        return point.attach(record)
+        return await pull_result(point.attach(record))
 
     def clear(self):
         for rpc_record in self.path_to_record.values():
             self.expunge(rpc_record)
 
     def expunge(self, rpc_record):
-        assert rpc_record.type is not None
         assert rpc_record in self.path_to_record.values()
         self._unindex(rpc_record)
         del rpc_record.registry
@@ -74,11 +76,15 @@ class Registry:
         return frozenset(p for rec in self.owner_to_records[owner]
                          for p in rec.owned_by(owner))
 
-    def remove_point(self, point):
-        if point.rpc_record not in self.path_to_record.values():
-            raise RPCError("This point is not registered")
-        rec = point.rpc_record
-        result = point.detach(point.rpc_record)
-        if len(rec) == 0:
-            self.expunge(rec)
-        return result
+    async def remove_point(self, point, path=None):
+        if path is None:
+            records = set(point.rpc_records)
+        else:
+            if not isinstance(path, Path):
+                path = Path(path)
+            records = {self[path]}
+        for r in records:
+            await pull_result(point.detach(r))
+            if len(r) == 0:
+                self.expunge(r)
+        return point

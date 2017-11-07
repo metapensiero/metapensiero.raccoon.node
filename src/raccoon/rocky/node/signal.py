@@ -16,9 +16,9 @@ from .abc import AbstractNode
 from .deco import CallNameDecorator
 from .dispatch import DispatchDetails
 from .errors import NodeError
-from .path import Path
 from .registry import SignalKey, RPCType
 
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +43,13 @@ class NodeBridge(ExternalSignallerAndHandler):
         # ext_kwargs = {k: v for k, v in kwargs.items()
         #               if not k.startswith('local_')}
         src_point = SignalKey(instance, signal).point()
-        if src_point.rpc_record is not None:
+        if src_point.is_attached:
             dispatcher = instance.node_context.dispatcher
-            details = DispatchDetails(RPCType.EVENT, src_point,
-                                      src_point.rpc_record.path,
-                                      args=args, kwargs=kwargs)
+            details = DispatchDetails(
+                RPCType.EVENT, src_point,
+                utils.calc_signal_path(instance.node_path,
+                                       instance.node_context, signal.name),
+                args=args, kwargs=kwargs)
             return dispatcher.dispatch(details)
         else:
             return NoResult

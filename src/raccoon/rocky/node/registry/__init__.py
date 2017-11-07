@@ -8,7 +8,8 @@
 
 from .collection import Registry
 from .point import (CallKey, CallPoint, EndPoint, HandlerKey, HandlerPoint,
-                    SignalKey, SignalPoint)
+                    OwnerKey, SignalKey, SignalPoint)
+from .record import RPCRecord
 from .utils import RPCType
 
 __all__ = (
@@ -17,7 +18,9 @@ __all__ = (
     'EndPoint',
     'HandlerKey',
     'HandlerPoint',
+    'OwnerKey',
     'Registry',
+    'RPCRecord',
     'RPCType',
     'SignalKey',
     'SignalPoint',

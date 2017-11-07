@@ -13,10 +13,11 @@ SPEC_CONTAINER_MEMBER_NAME = '_publish'
 "Special attribute name to attach rocky specific info to decorated methods."
 
 
-from .path import Path
 from .context import NodeContext
+from .deco import call
 from .dispatch import Dispatcher
 from .node import Node
+from .path import Path
 from .registry import Registry
 from .signal import NodeInitMeta
 
@@ -24,6 +25,7 @@ from . import serialize
 
 
 __all__ = (
+    'Dispatcher',
     'MultipleResults',
     'Node',
     'NodeContext',
@@ -32,6 +34,7 @@ __all__ = (
     'Path',
     'Registry',
     'Signal',
+    'call',
     'handler',
     'serialize',
 )

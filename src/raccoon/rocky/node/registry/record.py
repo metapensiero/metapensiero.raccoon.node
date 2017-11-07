@@ -23,6 +23,13 @@ class RPCRecord:
         self.path = path
         self.points = {}
 
+    def __contains__(self, point_or_key):
+        if isinstance(point_or_key, TypedKey):
+            return point_or_key in self.points
+        elif isinstance(point_or_key, EndPoint):
+            return point_or_key in self.points.values()
+        return False
+
     def __getitem__(self, key_or_type_or_owner):
         if isinstance(key_or_type_or_owner, TypedKey):
             return self.points[key_or_type_or_owner]
@@ -51,7 +58,7 @@ class RPCRecord:
     def add(self, point):
         assert type(point) is not EndPoint and isinstance(point, EndPoint)
         self.points[point.key] = point
-        point.rpc_record = self
+        point.rpc_records.add(self)
         self._reindex()
 
     def is_empty(self, context=None):
@@ -61,15 +68,17 @@ class RPCRecord:
         """Does this rpc_record represents some local resource?"""
         return (len(self) > 0 and any(map(lambda p: not p.remote,
                                           self.points.values())))
+
     @property
     def owners(self):
         return frozenset(key.owner for key in self.points)
 
     def owned_by(self, owner):
-        return frozenset(filter(lambda k: k.owner is owner, self.points))
+        return frozenset(filter(lambda p: p.key.owner is owner,
+                                self.points.values()))
 
     def remove(self, point):
         assert type(point) is not EndPoint and isinstance(point, EndPoint)
         del self.points[point.key]
-        point.rpc_record = None
+        point.rpc_records.discard(self)
         self._reindex()
