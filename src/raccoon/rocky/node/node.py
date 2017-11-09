@@ -183,7 +183,7 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
         if parent is not None and isinstance(parent, Node):
             parent.on_node_unbind.connect(self._node_on_parent_unbind)
 
-    def _node_connect(self, path, handler, disconnect=False):
+    async def _node_connect(self, path, handler, disconnect=False):
         if self.node_path is None:
             raise NodeError(
                 "%sconnect() is not allowed until binding happens." %
@@ -192,11 +192,14 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
         assert ctx is not None
         if isinstance(path, str):
             path = self.node_path.resolve(path, ctx)
-        if disconnect:
-            meth = ctx.registry.remove_point
-        else:
-            meth = ctx.registry.add_point
-        return meth(HandlerKey(self, handler).point(), path)
+
+        async with ctx.registry.new_session_for(self) as session:
+            if disconnect:
+                meth = session.remove_point
+            else:
+                meth = session.add_point
+            result = meth(HandlerKey(self, handler).point(), path)
+        return result
 
     def _node_dispatch(self, dispatch_type, dst_path, *flags, args=None,
                        kwargs=None):
@@ -223,49 +226,50 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
         handlers_data = type(self)._node_handlers
         calls_data = type(self)._node_calls
         points = set()
-        if len(signals_data):
-            try:
-                for name, sig in signals_data.items():
-                    sig_path = utils.calc_signal_path(path, sig, name)
-                    points.add(registry.add_point(SignalKey(self, sig).point(),
-                                                  sig_path))
-            except Exception as e:
-                if __debug__:
-                    logger.exception("Error while binding signals")
-                else:
-                    logger.error("Error while binding signals")
-                raise NodeError("Error while binding signals") from e
-        if len(handlers_data):
-            try:
-                handler_endpoints = utils.build_instance_mapping(self,
-                                                                 handlers_data)
-                for name, meth in handler_endpoints.items():
-                    hand_path = utils.calc_handler_target_path(path, context,
-                                                               name)
-                    points.add(registry.add_point(
-                        HandlerKey(self, meth).point(), hand_path))
-            except Exception as e:
-                if __debug__:
-                    logger.exception("Error while binding handlers")
-                else:
-                    logger.error("Error while binding handlers")
-                raise NodeError("Error while binding handlers") from e
-        if len(calls_data):
-            try:
-                call_endpoints = utils.build_instance_mapping(self,
-                                                              calls_data)
-                for name, meth in call_endpoints.items():
-                    hand_path = utils.calc_call_path(path, context, name)
-                    points.add(registry.add_point(CallKey(self, meth).point(),
-                                                  hand_path))
-            except Exception as e:
-                if __debug__:
-                    logger.exception("Error while binding calls")
-                else:
-                    logger.error("Error while binding calls")
-                raise NodeError("Error while binding calls") from e
+        async with registry.new_session_for(self) as session:
+            if len(signals_data):
+                try:
+                    for name, sig in signals_data.items():
+                        sig_path = utils.calc_signal_path(path, sig, name)
+                        points.add(session.add_point(
+                            SignalKey(self, sig).point(), sig_path))
+                except Exception as e:
+                    if __debug__:
+                        logger.exception("Error while binding signals")
+                    else:
+                        logger.error("Error while binding signals")
+                    raise NodeError("Error while binding signals") from e
+            if len(handlers_data):
+                try:
+                    handler_endpoints = utils.build_instance_mapping(
+                        self, handlers_data)
+                    for name, meth in handler_endpoints.items():
+                        hand_path = utils.calc_handler_target_path(path, context,
+                                                                   name)
+                        points.add(session.add_point(
+                            HandlerKey(self, meth).point(), hand_path))
+                except Exception as e:
+                    if __debug__:
+                        logger.exception("Error while binding handlers")
+                    else:
+                        logger.error("Error while binding handlers")
+                    raise NodeError("Error while binding handlers") from e
+            if len(calls_data):
+                try:
+                    call_endpoints = utils.build_instance_mapping(self,
+                                                                  calls_data)
+                    for name, meth in call_endpoints.items():
+                        hand_path = utils.calc_call_path(path, context, name)
+                        points.add(session.add_point(
+                            CallKey(self, meth).point(), hand_path))
+                except Exception as e:
+                    if __debug__:
+                        logger.exception("Error while binding calls")
+                    else:
+                        logger.error("Error while binding calls")
+                    raise NodeError("Error while binding calls") from e
         try:
-            points = frozenset(await MultipleResults(points))
+            points = frozenset(points)
         except Exception as e:
             if __debug__:
                 logger.exception("Error while binding endpoints")
@@ -310,8 +314,8 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
         registry = self.node_context.registry
         points = registry.points_for_owner(self)
 
-        detached_points = await MultipleResults(registry.remove_point(p)
-                                                for p in points)
+        async with registry.new_session_for(self) as session:
+            detached_points = set(session.remove_point(p) for p in points)
         await self.on_node_unregister.notify(
             node=self, path=self.node_path, context=self.node_context,
             parent=self.node_parent, points=detached_points)

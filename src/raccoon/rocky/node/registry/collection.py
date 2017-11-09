@@ -7,8 +7,9 @@
 #
 
 from collections import defaultdict
+import weakref
 
-from metapensiero.signal.utils import pull_result
+from metapensiero.signal import Signal, SignalAndHandlerInitMeta
 
 from ..path import Path
 
@@ -16,13 +17,73 @@ from .record import RPCRecord
 from .errors import RPCError
 
 
-class Registry:
+class RegistrationSession:
+
+    def __init__(self, context):
+        self.context = context
+        self.added = []
+        self.removed = []
+
+    def add(self, path, rpc_type):
+        self.added.append((path, rpc_type))
+
+    def add_point(self, point, path):
+        return self.context.registry.add_point(self, point, path)
+
+    def freeze(self):
+        self.added = tuple(self.added)
+        self.removed = tuple(self.removed)
+
+    def remove(self, path, rpc_type):
+        self.removed.append((path, rpc_type))
+
+    def remove_point(self, point, path=None):
+        return self.context.registry.remove_point(self, point, path=path)
+
+
+class OwnerRegistrationContext(set):
+
+    def __init__(self, registry, owner):
+        super().__init__()
+        self.registry = registry
+        self._owner = weakref.ref(owner)
+        self.journal = []
+
+    async def __aenter__(self):
+        return self._new_session()
+
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        sess = self.journal[-1]
+        sess.freeze()
+        await self.registry.on_session_complete.notify(registry=self.registry,
+                                                       session=sess)
+        self.registry._gc_context_for(self.owner)
+
+    def _new_session(self):
+        sess = RegistrationSession(self)
+        self.journal.append(sess)
+        return sess
+
+    def clear(self):
+        del self.registry
+        del self.journal
+        super().clear()
+
+    @property
+    def owner(self):
+        if self._owner is not None:
+            return self._owner()
+
+
+class Registry(metaclass=SignalAndHandlerInitMeta):
     """A registry for RPC end points, either *calls* or *subscriptions*.
     """
 
+    on_session_complete = Signal()
+
     def __init__(self):
         self.path_to_record = {}
-        self.owner_to_records = defaultdict(set)
+        self.owner_to_records = {}
 
     def __contains__(self, item):
         if isinstance(item, Path):
@@ -36,19 +97,13 @@ class Registry:
             path = Path(path)
         return self.path_to_record[path]
 
-    def _index(self, rpc_record, remove=False):
-        if remove:
-            self._unindex(rpc_record)
-        for owner in rpc_record.owners:
-            self.owner_to_records[owner].add(rpc_record)
+    def _gc_context_for(self, owner):
+        ctx = self.owner_to_records[owner]
+        if len(ctx) == 0:
+            ctx.dispose()
+            del self.owner_to_records[owner]
 
-    def _unindex(self, rpc_record):
-        for owner in rpc_record.owners:
-            self.owner_to_records[owner].discard(rpc_record)
-            if len(self.owner_to_records[owner]) == 0:
-                del self.owner_to_records[owner]
-
-    async def add_point(self, point, path):
+    def add_point(self, session, point, path):
         if not isinstance(path, Path):
             path = Path(path)
         record = self.get(path)
@@ -56,7 +111,14 @@ class Registry:
             record = RPCRecord(path)
             record.registry = self
             self.path_to_record[path] = record
-        return await pull_result(point.attach(record))
+            endpoint_is_new = True
+        else:
+            endpoint_is_new = point.rpc_type not in record
+        point.attach(record)
+        session.context.add(record)
+        if endpoint_is_new:
+            session.add(path, point.rpc_type)
+        return point
 
     def clear(self):
         for rpc_record in self.path_to_record.values():
@@ -64,7 +126,10 @@ class Registry:
 
     def expunge(self, rpc_record):
         assert rpc_record in self.path_to_record.values()
-        self._unindex(rpc_record)
+        if len(rpc_record) > 0:
+            for own in rpc_record.owners:
+                self.owner_to_records[own].discard(rpc_record)
+                self._gc_context_for(own)
         del rpc_record.registry
         del self.path_to_record[rpc_record.path]
         del rpc_record.path
@@ -72,19 +137,31 @@ class Registry:
     def get(self, path, default=None):
         return self.path_to_record.get(path, default)
 
+    def new_session_for(self, owner):
+        if owner not in self.owner_to_records:
+            self.owner_to_records[owner] = ctx = OwnerRegistrationContext(
+                self, owner)
+        else:
+            ctx = self.owner_to_records[owner]
+        return ctx
+
     def points_for_owner(self, owner):
         return frozenset(p for rec in self.owner_to_records[owner]
                          for p in rec.owned_by(owner))
 
-    async def remove_point(self, point, path=None):
+    def remove_point(self, session, point, path=None):
         if path is None:
             records = set(point.rpc_records)
         else:
             if not isinstance(path, Path):
                 path = Path(path)
             records = {self[path]}
-        for r in records:
-            await pull_result(point.detach(r))
-            if len(r) == 0:
-                self.expunge(r)
+        for rec in records:
+            point.detach(rec)
+            if point.rpc_type not in rec:
+                session.remove(rec.path, point.rpc_type)
+            if len(rec) == 0:
+                self.expunge(rec)
+            elif point.owner not in rec.owners:
+                session.context.discard(rec)
         return point

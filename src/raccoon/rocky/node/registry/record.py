@@ -23,11 +23,13 @@ class RPCRecord:
         self.path = path
         self.points = {}
 
-    def __contains__(self, point_or_key):
-        if isinstance(point_or_key, TypedKey):
-            return point_or_key in self.points
-        elif isinstance(point_or_key, EndPoint):
-            return point_or_key in self.points.values()
+    def __contains__(self, point_or_key_or_type):
+        if isinstance(point_or_key_or_type, TypedKey):
+            return point_or_key_or_type in self.points
+        elif isinstance(point_or_key_or_type, EndPoint):
+            return point_or_key_or_type in self.points.values()
+        elif isinstance(point_or_key_or_type, RPCType):
+            return any(p.rpc_type is point_or_key_or_type for p in self.points)
         return False
 
     def __getitem__(self, key_or_type_or_owner):
@@ -51,15 +53,10 @@ class RPCRecord:
                     points=len(self)
                 ))
 
-    def _reindex(self):
-        if self.registry is not None:
-            self.registry._index(self, remove=True)
-
     def add(self, point):
         assert type(point) is not EndPoint and isinstance(point, EndPoint)
         self.points[point.key] = point
         point.rpc_records.add(self)
-        self._reindex()
 
     def is_empty(self, context=None):
         return len(self.points) == 0
@@ -81,4 +78,3 @@ class RPCRecord:
         assert type(point) is not EndPoint and isinstance(point, EndPoint)
         del self.points[point.key]
         point.rpc_records.discard(self)
-        self._reindex()

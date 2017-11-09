@@ -186,6 +186,22 @@ class TypedKey(OwnerKey):
                            "{!r}".format(rpc_type))
 
 
+class TypedPoint(EndPoint):
+
+    KEY_CLS = TypedKey
+
+    def __init__(self, key):
+        if not isinstance(key, TypedKey):
+            raise RPCError("Invalid key type %r" % key)
+        super().__init__(key)
+
+    @property
+    def rpc_type(self):
+        return self.key.rpc_type
+
+
+
+
 class SignalKey(TypedKey):
     """A key for a signal endpoint."""
 
@@ -200,7 +216,7 @@ class SignalKey(TypedKey):
         return super().__new__(cls, owner, RPCType.EVENT, signal)
 
 
-class SignalPoint(EndPoint):
+class SignalPoint(TypedPoint):
 
     KEY_CLS = SignalKey
     is_source = True
@@ -248,7 +264,7 @@ class HandlerKey(TypedKey):
                                fself)
 
 
-class HandlerPoint(EndPoint):
+class HandlerPoint(TypedPoint):
     """A specific point for handlers."""
 
     KEY_CLS = HandlerKey
