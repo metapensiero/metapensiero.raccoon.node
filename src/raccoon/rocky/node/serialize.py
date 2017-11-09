@@ -106,10 +106,15 @@ class SerializationDefinition:
     """
 
     def __init__(self, serialization_id, *, allow_subclasses=False,
-                 serializer=None, cls=None):
+                 serializer=None, cls=None, aliases=None):
         self.serialization_id = serialization_id
         self.allow_subclasses = allow_subclasses
         self.serializer = serializer
+        if aliases is None:
+            aliases = ()
+        else:
+            aliases = tuple(aliases)
+        self.aliases = aliases
         if cls:
             self.register_class(cls)
         else:
@@ -172,7 +177,8 @@ class Registry:
         """
         assert (definition.serialization_id is not None and
                 isinstance(definition.serialization_id, str))
-        if definition.serialization_id in self._id_to_definition:
+        if (definition.serialization_id in self._id_to_definition or
+            any(al in self._id_to_definition for al in definition.aliases)):
             raise SerializationError(f"The id '{definition.serialization_id}'"
                                      f" is taken already")
         assert definition.cls is not None
@@ -180,7 +186,8 @@ class Registry:
             raise SerializationError(f"Class {definition.cls.__name__} is "
                                      f"already registered")
 
-        self._id_to_definition[definition.serialization_id] = definition
+        for serial_id in ((definition.serialization_id,) + definition.aliases):
+            self._id_to_definition[serial_id] = definition
         self._cls_to_definition[definition.cls] = definition
 
     def deserialize(self, serialized, end_node=None):
