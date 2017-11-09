@@ -36,9 +36,9 @@ class Serializable(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def node_deserialize(self, value, end_node=None):
-        """Called by the node infrastructure to have a serialized state of an instance
-        reconverted. I isn't enforced that the returned value is an instance
-        of the managed class, it can be anything suitable.
+        """Called by the node infrastructure to have a serialized state of an
+        instance reconverted. I isn't enforced that the returned value is an
+        instance of the managed class, it can be anything suitable.
 
         :param value: The serialized value, the value field of the
           containing Serialized instance.
@@ -51,8 +51,8 @@ class Serializable(metaclass=abc.ABCMeta):
 
 
 class SerializedMeta(type):
-    """Metaclass for the `Serialized` class, it is used to dynamically check if an
-    instance of ``dict`` is also an instance of `Serialized`.
+    """Metaclass for the `Serialized` class, it is used to dynamically check
+    if an instance of ``dict`` is also an instance of `Serialized`.
     """
 
     def __instancecheck__(self, instance):
@@ -100,9 +100,10 @@ class SerializationDefinition:
     It can be used as a class decorator.
 
     :param str serialization_id: a string identifying the serialized state
-    :param bool allow_subclasses: if the current definition should be used also
-      for subclasses of the given one. Defaults to ``False``
-    :param serializer: an optional serialization class to be used.
+    :keyword bool allow_subclasses: if the current definition should be used
+      also for subclasses of the given one. Defaults to ``False``
+    :keyword serializer: an optional serialization class to be used.
+    :keyword aliases: optional sequence of aliases of the ``serialization_id``
     """
 
     def __init__(self, serialization_id, *, allow_subclasses=False,
@@ -154,9 +155,9 @@ class SerializationDefinition:
 
 
 class Registry:
-    """A registry of serialization definitions indexed by *serialization_id* and
-    *class*. An instance of this class is exported in place of the whole module
-    for easier fruition."""
+    """A registry of serialization definitions indexed by *serialization_id*
+    and *class*. An instance of this class is exported in place of the whole
+    module for easier fruition."""
 
     SerializedMeta = SerializedMeta
     Serialized = Serialized

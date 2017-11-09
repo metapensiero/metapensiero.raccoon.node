@@ -279,7 +279,8 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
         logger.debug("Completed binding of signals, handlers and calls on "
                      "node at %r", path)
         await self.on_node_register.notify(
-            node=self, path=path, context=context, parent=parent, points=points)
+            node=self, path=path, context=context, parent=parent,
+            points=points)
         return points
 
     def _node_remove_child(self, child):
