@@ -19,7 +19,7 @@ from .errors import NodeError
 from .path import Path
 from .registry import CallKey, HandlerKey, OwnerKey, RPCType, SignalKey
 from .signal import NodeInitMeta
-from . import utils
+from . import utils, serialize
 
 
 _undefined = object()
@@ -27,7 +27,9 @@ _undefined = object()
 logger = logging.getLogger(__name__)
 
 
-class Node(AbstractNode, metaclass=NodeInitMeta):
+@serialize.define('raccoon.node.Node', allow_subclasses=True,
+                  aliases=('raccoon.node.WAMPNode',))
+class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
     """The node is the base building block of Rocky.
     """
 
@@ -379,6 +381,10 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
         return await pull_result(
             self._node_dispatch(RPCType.CALL, path, args=args, kwargs=None))
 
+    @classmethod
+    def node_deserialize(cls, value, endpoint_node):
+        return endpoint_node.remote(value)
+
     def node_child_on_unbind(self, node, path, parent):
         """Called when a child node unbind itself, by default it will remove
         the attribute reference on it.
@@ -424,6 +430,14 @@ class Node(AbstractNode, metaclass=NodeInitMeta):
         else:
             res = self
         return res
+
+    @classmethod
+    def node_serialize(cls, instance, srcpoint_node):
+        if instance.node_path is None:
+            raise serialize.SerializationError(
+                "This instance cannot be serialized"
+            )
+        return serialize.Serialized(str(instance.node_path))
 
     async def node_unbind(self):
         """Unbinds a node from a path. It emits a `on_node_unbind` event,
