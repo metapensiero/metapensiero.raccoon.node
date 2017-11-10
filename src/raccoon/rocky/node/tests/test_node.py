@@ -15,6 +15,7 @@ from unittest.mock import patch
 from metapensiero.signal import Signal, handler
 
 from raccoon.rocky.node import call, Node, Path
+from raccoon.rocky.node.errors import DispatchError
 
 # All test coroutines will be treated as marked
 pytestmark = pytest.mark.asyncio()
@@ -199,7 +200,7 @@ async def test_node_unregister(node_context, event_loop):
     assert res == 6
     await rpc_test.node_remove('sub')
 
-    with pytest.raises(Exception):
+    with pytest.raises(DispatchError):
         res = await rpc_test2.bar()
 
 
