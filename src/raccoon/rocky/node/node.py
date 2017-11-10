@@ -50,7 +50,7 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
       the path where the node is bound, available also as ``node.node_path``
     """
 
-    on_node_after_unbind = Signal(sort_mode=Signal.SORT_MODE.TOPDOWN)
+    on_node_after_unbind = Signal(flags=Signal.FLAGS.SORT_TOPDOWN)
     """Signal emitted at the end of :meth:`node_unbind` call, after
     `on_node_bind. Every callback
     will receive the following parameters:
@@ -95,7 +95,7 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
 
     on_node_register = Signal()
 
-    on_node_unbind = Signal(sort_mode=Signal.SORT_MODE.TOPDOWN)
+    on_node_unbind = Signal(flags=Signal.FLAGS.SORT_TOPDOWN)
     """Signal emitted at the end of :meth:`node_unbind` call. Every callback
     will receive the following parameters:
 
@@ -109,7 +109,7 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
       the parent node
     """
 
-    on_node_unregister = Signal(sort_mode=Signal.SORT_MODE.TOPDOWN)
+    on_node_unregister = Signal(flags=Signal.FLAGS.SORT_TOPDOWN)
 
     node_context = None
     """An instance of the :class:`~.context.NodeContext` class that supplies
