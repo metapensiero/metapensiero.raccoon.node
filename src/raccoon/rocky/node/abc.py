@@ -6,10 +6,19 @@
 # :Copyright: Copyright © 2017 Arstecnica s.r.l.
 #
 
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
+from metapensiero.signal import Signal
 
 class AbstractNode(metaclass=ABCMeta):
+
+    on_node_add = abstractproperty()
+    on_node_after_unbind = abstractproperty()
+    on_node_before_bind = abstractproperty()
+    on_node_bind = abstractproperty()
+    on_node_register = abstractproperty()
+    on_node_unbind = abstractproperty()
+    on_node_unregister = abstractproperty()
 
     @abstractmethod
     async def node_add(self, name, value):
@@ -44,9 +53,13 @@ class AbstractNode(metaclass=ABCMeta):
         from .signal import NodeInitMeta
         result = False
         if issubclass(type(subcls), NodeInitMeta):
-            for name in ('on_node_add', 'on_node_before_bind', 'on_node_bind',
-                         'on_node_unbind', 'on_node_after_unbind'):
-                if not any(name in b.__dict__ for b in subcls.__mro__):
+            for name in ('on_node_add', 'on_node_after_unbind',
+                         'on_node_before_bind', 'on_node_bind',
+                         'on_node_register', 'on_node_unbind',
+                         'on_node_unregister'):
+                if not any((name in b.__dict__ and
+                            isinstance(getattr(b, name), Signal))
+                            for b in subcls.__mro__):
                     break
             else:
                 result = True
