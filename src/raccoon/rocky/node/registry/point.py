@@ -237,7 +237,7 @@ class SignalPoint(TypedPoint):
 
     @property
     def proxy(self):
-        return self.signal.__get__(self.instance)
+        return self.signal.__get__(self.instance, None)
 
     def call(self, *args, **kwargs):
         return self.proxy.notify_prepared(args, kwargs,
