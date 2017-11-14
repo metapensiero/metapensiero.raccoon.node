@@ -11,6 +11,7 @@ import enum
 
 from metapensiero.signal import Executor
 
+from .abc import AbstractDispatcher
 from .errors import DispatchError
 from .path import Path
 from .registry import EndPoint, RPCType
@@ -48,9 +49,10 @@ class DispatchDetails(namedtuple(
                                args, kwargs)
 
 
-class Dispatcher:
+class Dispatcher(AbstractDispatcher):
 
     def __init__(self, registry):
+        super().__init__()
         self.registry = registry
 
     def _get_dispatch_method(self, disp_type):

@@ -64,3 +64,43 @@ class AbstractNode(metaclass=ABCMeta):
             else:
                 result = True
         return result
+
+
+class AbstractDispatcher(metaclass=ABCMeta):
+
+    def __init__(self):
+        self.gateways = set()
+
+    def add_gateway(self, instance):
+        """Adds a gateway to this dispatcher."""
+        if not isinstance(instance, AbstractGateway):
+            raise ValueError("Gateway must be an instance of AbstractGateway"
+                             " got %r instead" % type(instance))
+        self.gateways.add(instance)
+
+    def remove_gateway(self, instance):
+        """Remove a gateway from a dispatcher."""
+        self.gateways.discard(instance)
+
+    @abstractmethod
+    def dispatch(self, dispatch_details):
+        """Dispatch the data specified into the `dispatch_details` parameter."""
+
+
+class AbstractGateway(metaclass=ABCMeta):
+
+    remote = abstractproperty()
+    """Tells if this gateway interfaces with an external system."""
+
+    @abstractmethod
+    def connect(self, node_context):
+        """Connect a `~.context.NodeContext` to this gateway"""
+
+    @property
+    @abstractmethod
+    def contexts(self):
+        """Returns the contexts connected to this gateway."""
+
+    @abstractmethod
+    def dispatch(self, dispatcher, dispatch_details):
+        """Apply a dispatching to all the participant contextes."""
