@@ -24,4 +24,3 @@
    path
    registrations
    serialize
-   wamp
