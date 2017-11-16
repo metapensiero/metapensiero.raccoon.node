@@ -6,7 +6,6 @@
 # :Copyright: Copyright © 2017 Arstecnica s.r.l.
 #
 
-from collections import defaultdict
 import weakref
 
 from metapensiero.signal import Signal, SignalAndHandlerInitMeta
@@ -14,7 +13,6 @@ from metapensiero.signal import Signal, SignalAndHandlerInitMeta
 from ..path import Path
 
 from .record import RPCRecord
-from .errors import RPCError
 
 
 class RegistrationSession:
