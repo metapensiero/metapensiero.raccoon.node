@@ -10,5 +10,11 @@
  Registrations
 ===============
 
-.. automodule:: raccoon.rocky.node.registrations
+.. automodule:: raccoon.rocky.node.registry.collection
+   :members:
+
+.. automodule:: raccoon.rocky.node.registry.record
+   :members:
+
+.. automodule:: raccoon.rocky.node.registry.point
    :members:
