@@ -74,7 +74,7 @@ class OwnerRegistrationContext(set):
 
 
 class Registry(metaclass=SignalAndHandlerInitMeta):
-    """A registry for RPC end points, either *calls* or *subscriptions*.
+    """A registry for RPC end points, either *calls* or *events*.
     """
 
     on_session_complete = Signal()

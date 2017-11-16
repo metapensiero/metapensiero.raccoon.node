@@ -113,17 +113,16 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
 
     node_context = None
     """An instance of the :class:`~.context.NodeContext` class that supplies
-    informations for the :term:`WAMP` setup or possibly other kind of
-    informations.
+    information for the registration process or application-level informations.
     """
 
     node_parent = None
     """Contains the parent node instance, if any."""
 
     node_path = None
-    """After :meth:`bind` operation contains the :class:`~.path.Path` that
-    describes the position in the tree and the base path for :term:`WAMP`
-    functionality.
+    """After :meth:`node_bind` operation contains the :class:`~.path.Path` that
+    describes the position in the tree and the base for the registration of the
+    avalilable resources.
     """
 
     _node_unbind_task = None

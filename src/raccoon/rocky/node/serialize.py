@@ -37,7 +37,7 @@ class Serializable(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def node_deserialize(self, value, end_node=None):
         """Called by the node infrastructure to have a serialized state of an
-        instance reconverted. I isn't enforced that the returned value is an
+        instance reconverted. It isn't enforced that the returned value is an
         instance of the managed class, it can be anything suitable.
 
         :param value: The serialized value, the value field of the
@@ -46,7 +46,6 @@ class Serializable(metaclass=abc.ABCMeta):
           will be submitted
         :returns: anything suitable to rephresent the serialized value.
         :raises SerializationError: if it's unable to deserialize the value
-
         """
 
 
