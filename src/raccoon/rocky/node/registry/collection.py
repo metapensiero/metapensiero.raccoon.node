@@ -8,7 +8,7 @@
 
 import weakref
 
-from metapensiero.signal import Signal, SignalAndHandlerInitMeta
+from metapensiero.signal import Signal, SignalAndHandlerInitMeta, signal
 
 from ..path import Path
 
@@ -77,7 +77,17 @@ class Registry(metaclass=SignalAndHandlerInitMeta):
     """A registry for RPC end points, either *calls* or *events*.
     """
 
-    on_session_complete = Signal()
+    @signal
+    def on_session_complete(self, registry, session):
+        """Registration are subdivided in *sessions*. This event is called at
+        the end of each one.
+
+        :param registry: the registry that owns the session
+        :type registry: :class:`Registry`
+        :param session: the session containing the list of added or removed
+          resources
+        :type session: :class:`~RegistrationSession`
+        """
 
     def __init__(self):
         self.path_to_record = {}

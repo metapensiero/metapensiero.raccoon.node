@@ -9,7 +9,7 @@
 import asyncio
 import logging
 
-from metapensiero.signal import MultipleResults, Signal
+from metapensiero.signal import Signal, signal
 from metapensiero.signal.utils import pull_result
 
 from .abc import AbstractNode
@@ -39,77 +39,106 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
         'on_node_after_unbind'
     }
 
-    on_node_add = Signal()
-    """Signal emitted when a node is added by setting an attribute to it.
-    Every callback will receive the following parameters:
+    @signal
+    def on_node_add(self, path, node):
+        """Signal emitted when a node is added by setting an attribute to it.
+        Every callback will receive the following parameters:
 
-    node : :class:`Node`
-      the bound node
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param node: the bound child node
+        :type node: :class:`Node`
+        """
 
-    path : :class:`~.path.Path`
-      the path where the node is bound, available also as ``node.node_path``
-    """
+    @signal(Signal.FLAGS.SORT_TOPDOWN)
+    def on_node_after_unbind(self, node, path, parent):
+        """Signal emitted at the end of :meth:`node_unbind` call, after
+        `on_node_bind`. Every callback will receive the following parameters:
 
-    on_node_after_unbind = Signal(flags=Signal.FLAGS.SORT_TOPDOWN)
-    """Signal emitted at the end of :meth:`node_unbind` call, after
-    `on_node_bind. Every callback
-    will receive the following parameters:
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        """
 
-    node : :class:`Node`
-      the bound node
+    @signal
+    def on_node_before_bind(self, node, path, parent):
+        """Signal emitted at the start of :meth:`node_bind` call. Every
+        callback will receive the following parameters:
 
-    path : :class:`~.path.Path`
-      the path where the node is bound, available also as ``node.node_path``
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound
+        :type path: :class:`~.path.Path`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        """
 
-    parent : :class:`Node`
-      the parent node
-    """
+    @signal
+    def on_node_bind(self, node, path, parent):
+        """Signal emitted at the end of :meth:`node_bind` call. Every callback
+        will receive the following parameters:
 
-    on_node_before_bind = Signal()
-    """Signal emitted at the start of :meth:`node_bind` call. Every callback
-    will receive the following parameters:
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        """
 
-    node : :class:`Node`
-      the bound node
+    @signal
+    def on_node_register(self, node, path, context, parent, points):
+        """Signal emitted when the node's resources are registered.
 
-    path : :class:`~.path.Path`
-      the path where the node is bound, available also as ``node.node_path``
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param context: the node_context of the node
+        :type context: :class:`~.context.NodeContext`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        :param points: a set containing the rpc points created by the
+          registration
+        """
 
-    parent : :class:`Node`
-      the parent node
-    """
+    @signal(Signal.FLAGS.SORT_TOPDOWN)
+    def on_node_unbind(self,node, path, parent):
+        """Signal emitted at the end of :meth:`node_unbind` call. Every
+        callback will receive the following parameters:
 
-    on_node_bind = Signal()
-    """Signal emitted at the end of :meth:`node_bind` call. Every callback
-    will receive the following parameters:
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        """
 
-    node : :class:`Node`
-      the bound node
+    @signal(Signal.FLAGS.SORT_TOPDOWN)
+    def on_node_unregister(self, node, path, context, parent, points):
+        """Signal emitted when the node's resources are unregistered.
 
-    path : :class:`~.path.Path`
-      the path where the node is bound, available also as ``node.node_path``
-
-    parent : :class:`Node`
-      the parent node
-    """
-
-    on_node_register = Signal()
-
-    on_node_unbind = Signal(flags=Signal.FLAGS.SORT_TOPDOWN)
-    """Signal emitted at the end of :meth:`node_unbind` call. Every callback
-    will receive the following parameters:
-
-    node : :class:`Node`
-      the bound node
-
-    path : :class:`~.path.Path`
-      the path where the node is bound, available also as ``node.node_path``
-
-    parent : :class:`Node`
-      the parent node
-    """
-
-    on_node_unregister = Signal(flags=Signal.FLAGS.SORT_TOPDOWN)
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param context: the node_context of the node
+        :type context: :class:`~.context.NodeContext`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        :param points: a set containing the rpc points created by the
+          unregistration
+        """
 
     node_context = None
     """An instance of the :class:`~.context.NodeContext` class that supplies
@@ -342,33 +371,7 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
         a `parent`. The context is cloned so that changes to it will affect
         only a branch.
 
-        It emits a `on_node_bind` *synchronous* event with the following
-        keyword arguments:
-
-        node : :class:`Node`
-          this node
-
-        path : :class:`~.path.Path`
-          this node's ``node_path``
-
-        parent : :class:`Node`
-          this node's ``node_parent``, if any
-
-        :type path: an instance of :class:`~.path.Path`
-        :param path: an instance of the path or a dotted string or a tuple.
-        :type context: an instance of :class:`~.context.NodeContext`
-        :param context: an instance of the current context or ``None``.
-        :type parent: an instance of :class:`Node`
-        :param parent: a parent node or ``None``.
-
-        .. note:: This is now a *coroutine*
-
-          This was changed from a normal method (with transaction tracking)
-          to a *coroutine*.
-
-          In reason of this the ``on_node_bind`` was changed to be
-          *synchronous*. This means that when this is complete, the
-          notification of the event is completed too.
+        It emits a `on_node_bind`  event.
         """
         assert len(path) > 0
         path, context = await self._node_before_bind(path, context, parent)
