@@ -272,8 +272,8 @@ class Node(AbstractNode, serialize.Serializable, metaclass=NodeInitMeta):
                     handler_endpoints = utils.build_instance_mapping(
                         self, handlers_data)
                     for name, meth in handler_endpoints.items():
-                        hand_path = utils.calc_handler_target_path(path, context,
-                                                                   name)
+                        hand_path = utils.calc_handler_target_path(
+                            path, context, name)
                         points.add(session.add_point(
                             HandlerKey(self, meth).point(), hand_path))
                 except Exception as e:
