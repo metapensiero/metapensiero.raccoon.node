@@ -35,7 +35,7 @@ def norm_path(value, full=False):
         elif isinstance(value, abc.Iterable):
             value = tuple(value)
         else:
-            raise ValueError(f"Invalid value {value!r}")
+            raise ValueError("Invalid value {value!r}".format(value=value))
         normalized = value
     if len(normalized) == 0:
         raise ValueError("Empty value")
