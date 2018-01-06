@@ -58,7 +58,8 @@ setup(
         ],
         'test': [
             'pytest',
-            'pytest-asyncio'
+            'pytest-asyncio',
+            'pytest-cov'
         ]
     },
     setup_requires=['pytest-runner'],
