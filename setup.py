@@ -40,8 +40,8 @@ setup(
         "Programming Language :: Python :: 3.6",
         ],
     keywords='',
-
-    packages=find_packages('src'),
+    packages=['metapensiero.raccoon.' + pkg
+              for pkg in find_packages('src/metapensiero/raccoon')],
     package_dir={'': 'src'},
     namespace_packages=['metapensiero', 'metapensiero.raccoon'],
 
