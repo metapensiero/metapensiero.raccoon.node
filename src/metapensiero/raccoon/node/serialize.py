@@ -128,8 +128,9 @@ class SerializationDefinition:
             if is_serializable:
                 self.serializer = cls
             else:
-                raise SerializationError(f"No serializer provided and class"
-                                         f" {cls.__name__} isn't serializable")
+                raise SerializationError(
+                    ("No serializer provided and class"
+                     " {cls.__name__} isn't serializable").format(cls=cls))
         else:
             if ((isinstance(self.serializer, type) and
                  issubclass(self.serializer, Serializable)) or
@@ -137,8 +138,8 @@ class SerializationDefinition:
                  isinstance(self.serializer, Serializable))):
                 Serializable.register(cls)
             else:
-                raise SerializationError(f"The provided serializer is not "
-                                         f"Serializable.")
+                raise SerializationError("The provided serializer is not "
+                                         "Serializable.")
         self.cls = cls
         if self.allow_subclasses:
             setattr(cls, NODE_SERIALIZATION_CLASS_KEY, self.serialization_id)
@@ -173,12 +174,14 @@ class Registry:
         assert (definition.serialization_id is not None and
                 isinstance(definition.serialization_id, str))
         if definition.serialization_id in self._id_to_definition:
-            raise SerializationError(f"The id '{definition.serialization_id}' is taken "
-                                     f"already")
+            raise SerializationError(
+                ("The id '{definition.serialization_id}' is taken "
+                 "already").format(definition=definition))
         assert definition.cls is not None
         if definition.cls in self._cls_to_definition:
-            raise SerializationError(f"Class {definition.cls.__name__} is "
-                                     f"already registered")
+            raise SerializationError(
+                ("Class {definition.cls.__name__} is "
+                 "already registered").format(definition=definition))
 
         self._id_to_definition[definition.serialization_id] = definition
         self._cls_to_definition[definition.cls] = definition
@@ -193,13 +196,15 @@ class Registry:
         :raises SerializationError: if a matching definition cannot be found
         """
         if not isinstance(serialized, self.Serialized):
-            raise SerializationError(f"{serialized!r} is not a valid "
-                                     f"serialized value")
+            raise SerializationError(
+                ("{serialized!r} is not a valid "
+                 "serialized value").format(serialized=serialized))
         definition = self._id_to_definition.get(
             serialized[NODE_SERIALIZIED_ID_KEY])
         if definition is None:
-            raise SerializationError(f"Don't know how to deserialize "
-                                     f"{serialized!r}")
+            raise SerializationError(
+                ("Don't know how to deserialize "
+                 "{serialized!r}").format(serialized=serialized))
         return definition.serializer.node_deserialize(
             serialized[NODE_SERIALIZIED_VALUE_KEY],
             end_node
@@ -248,7 +253,9 @@ class Registry:
             if serialization_id in self._id_to_definition:
                 definition = self._id_to_definition[serialization_id]
         if definition is None:
-            raise SerializationError(f"Don't know how to serialize {instance!r}")
+            raise SerializationError(
+                "Don't know how to serialize {instance!r}".format(
+                    instance=instance))
         result = definition.serializer.node_serialize(instance, src_node)
         if not isinstance(result, Serialized):
             result = Serialized(result)
