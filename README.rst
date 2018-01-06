@@ -6,6 +6,16 @@
 .. :Copyright: © 2016, 2017, 2018 Alberto Berti
 ..
 
+.. image:: https://gitlab.com/metapensiero/metapensiero.raccoon.node/badges/master/pipeline.svg
+   :target: https://gitlab.com/metapensiero/metapensiero.raccoon.node/commits/master
+   :align: left
+   :alt: tests status
+
+.. image:: https://gitlab.com/metapensiero/metapensiero.raccoon.node/badges/master/coverage.svg
+   :target: https://gitlab.com/metapensiero/metapensiero.raccoon.node/commits/master
+   :align: left
+   :alt: tests coverage
+
 ===========================
  metapensiero.raccoon.node
 ===========================
