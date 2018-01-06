@@ -33,15 +33,15 @@ setup(
 
     license="GPLv3+",
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         ],
     keywords='',
-
-    packages=find_packages('src'),
+    packages=['metapensiero.raccoon.' + pkg
+              for pkg in find_packages('src/metapensiero/raccoon')],
     package_dir={'': 'src'},
     namespace_packages=['metapensiero', 'metapensiero.raccoon'],
 
