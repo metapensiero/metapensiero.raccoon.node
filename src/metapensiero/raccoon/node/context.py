@@ -47,7 +47,8 @@ class NodeContext:
             ctx = ctx._parent_context
         else:
             raise AttributeError(("This {type(self).__name__} has no "
-                                  "attribute {name!r}").format(name=name))
+                                  "attribute {name!r}").format(
+                                      name=name, self=self))
         return value
 
     def __getitem__(self, item):
