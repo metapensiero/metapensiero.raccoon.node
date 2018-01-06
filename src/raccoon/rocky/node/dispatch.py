@@ -3,7 +3,7 @@
 # :Created:   ven 20 ott 2017 16:01:52 CEST
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright © 2017 Arstecnica s.r.l.
+# :Copyright: Copyright © 2017, 2018 Alberto Berti
 #
 
 from collections import namedtuple
