@@ -48,7 +48,7 @@ setup(
     install_requires=[
         'setuptools',
         'autobahn>=0.13',
-        'metapensiero.signal>=0.8',
+        'metapensiero.signal==0.9',
         'metapensiero.asyncio.transaction>=0.7'
     ],
     extras_require={
