@@ -46,16 +46,16 @@ class NodeContext:
                 break
             ctx = ctx._parent_context
         else:
-            raise AttributeError(("This {type(self).__name__} has no "
-                                  "attribute {name!r}").format(
-                                      name=name, self=self))
+            raise AttributeError(
+                ("This {self_type} has no attribute {name!r}").format(
+                     name=name, self_type=type(self).__name__))
         return value
 
     def __getitem__(self, item):
         try:
             return getattr(self, item)
         except AttributeError:
-            raise KeyError("Ivalid key {item!r}".format(item=item))
+            raise KeyError("Invalid key {item!r}".format(item=item))
 
     def __iter__(self):
         return iter(self.keys())

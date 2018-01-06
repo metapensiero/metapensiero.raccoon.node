@@ -135,7 +135,8 @@ class SerializationDefinition:
             else:
                 raise SerializationError(
                     ("No serializer provided and class"
-                     " {cls.__name__} isn't serializable").format(cls=cls))
+                     " {cname} isn't serializable").format(
+                         cname=cls.__name__))
         else:
             if ((isinstance(self.serializer, type) and
                  issubclass(self.serializer, Serializable)) or
@@ -181,13 +182,13 @@ class Registry:
         if (definition.serialization_id in self._id_to_definition or
             any(al in self._id_to_definition for al in definition.aliases)):
             raise SerializationError(
-                ("The id '{definition.serialization_id}'"
-                 " is taken already").format(definition=definition))
+                ("The id '{ser_id}' is taken already").format(
+                    ser_id=definition.serialization_id))
         assert definition.cls is not None
         if definition.cls in self._cls_to_definition:
             raise SerializationError(
-                ("Class {definition.cls.__name__} is "
-                 "already registered").format(definition=definition))
+                ("Class {def_cname} is already registered").format(
+                    def_cname=definition.cls.__name__))
 
         for serial_id in ((definition.serialization_id,) + definition.aliases):
             self._id_to_definition[serial_id] = definition
@@ -204,14 +205,14 @@ class Registry:
         """
         if not isinstance(serialized, self.Serialized):
             raise SerializationError(
-                ("{serialized!r} is not a valid "
-                 "serialized value").format(serialized=serialized))
+                ("{serialized!r} is not a valid serialized value").format(
+                    serialized=serialized))
         definition = self._id_to_definition.get(
             serialized[NODE_SERIALIZIED_ID_KEY])
         if definition is None:
             raise SerializationError(
-                ("Don't know how to deserialize "
-                 "{serialized!r}").format(serialized=serialized))
+                ("Don't know how to deserialize {serialized!r}").format(
+                    serialized=serialized))
         return definition.serializer.node_deserialize(
             serialized[NODE_SERIALIZIED_VALUE_KEY],
             end_node
