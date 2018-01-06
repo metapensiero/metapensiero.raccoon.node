@@ -10,11 +10,11 @@
  Registrations
 ===============
 
-.. automodule:: raccoon.rocky.node.registry.collection
+.. automodule:: metapensiero.raccoon.node.registry.collection
    :members:
 
-.. automodule:: raccoon.rocky.node.registry.record
+.. automodule:: metapensiero.raccoon.node.registry.record
    :members:
 
-.. automodule:: raccoon.rocky.node.registry.point
+.. automodule:: metapensiero.raccoon.node.registry.point
    :members:

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- utilities
+# :Project:   metapensiero.raccoon.node -- utilities
 # :Created:   mar 24 ott 2017 13:47:49 CEST
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later

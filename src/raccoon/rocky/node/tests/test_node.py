@@ -14,8 +14,8 @@ from unittest.mock import patch
 
 from metapensiero.signal import Signal, handler
 
-from raccoon.rocky.node import call, Node, Path
-from raccoon.rocky.node.errors import DispatchError
+from metapensiero.raccoon.node import call, Node, Path
+from metapensiero.raccoon.node.errors import DispatchError
 
 # All test coroutines will be treated as marked
 pytestmark = pytest.mark.asyncio()

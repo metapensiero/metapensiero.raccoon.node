@@ -10,5 +10,5 @@
  Context
 =========
 
-.. automodule:: raccoon.rocky.node.context
+.. automodule:: metapensiero.raccoon.node.context
    :members:

@@ -16,7 +16,7 @@ undefined = object()
 
 class NodeContext:
     """
-    The run context of a tree of :class:`~raccoon.rocky.node.node.Node`
+    The run context of a tree of :class:`~metapensiero.raccoon.node.node.Node`
     instances.
     """
 

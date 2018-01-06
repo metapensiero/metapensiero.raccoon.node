@@ -10,7 +10,7 @@ import asyncio
 
 import pytest
 
-from raccoon.rocky.node import NodeContext
+from metapensiero.raccoon.node import NodeContext
 
 
 @pytest.fixture(scope='function')
@@ -72,7 +72,7 @@ def events(event_loop):
 def start_trepan():
     from trepan.interfaces import server as Mserver
     from trepan.api import debug
-    connection_opts={'IO': 'TCP', 'PORT': 1955}
+    connection_opts = {'IO': 'TCP', 'PORT': 1955}
     intf = Mserver.ServerInterface(connection_opts=connection_opts)
     dbg_opts = {'interface': intf}
     print('Starting TCP server listening on port 1955.')

@@ -1,4 +1,4 @@
-from raccoon.rocky.node.registry.point import OwnerKey, EndPoint
+from metapensiero.raccoon.node.registry.point import OwnerKey, EndPoint
 
 
 def test_key_hashing():

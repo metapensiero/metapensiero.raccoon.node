@@ -10,5 +10,5 @@
  Serialize
 ===========
 
-.. automodule:: raccoon.rocky.node.serialize
+.. automodule:: metapensiero.raccoon.node.serialize
    :members:

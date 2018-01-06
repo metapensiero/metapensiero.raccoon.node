@@ -1,4 +1,4 @@
-from raccoon.rocky.node.path import Path
+from metapensiero.raccoon.node.path import Path
 
 from .point import EndPoint, TypedKey
 from .utils import RPCType

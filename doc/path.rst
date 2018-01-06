@@ -10,5 +10,5 @@
  Path
 ======
 
-.. automodule:: raccoon.rocky.node.path
+.. automodule:: metapensiero.raccoon.node.path
    :members:

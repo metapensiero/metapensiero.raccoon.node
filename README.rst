@@ -6,13 +6,13 @@
 .. :Copyright: © 2016, 2017, 2018 Alberto Berti
 ..
 
-====================
- raccoon.rocky.node
-====================
+===========================
+ metapensiero.raccoon.node
+===========================
 
 A base object for publishing WAMP resources
 ===========================================
 
  :author: Alberto Berti
- :contact: alberto@arstecnica.it
+ :contact: alberto@metapensiero.it
  :license: GNU General Public License version 3 or later

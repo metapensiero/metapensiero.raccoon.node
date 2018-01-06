@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- metapensiero.signal hookup
+# :Project:   metapensiero.raccoon.node -- metapensiero.signal hookup
 # :Created:   mar 24 ott 2017 16:05:44 CEST
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later

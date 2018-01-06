@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- single rpc endpoint class
+# :Project:   metapensiero.raccoon.node -- single rpc endpoint class
 # :Created:   gio 26 ott 2017 16:18:28 CEST
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later

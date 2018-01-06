@@ -21,15 +21,15 @@ with open(os.path.join(here, 'version.txt'), encoding='utf-8') as f:
 
 
 setup(
-    name="raccoon.rocky.node",
+    name="metapensiero.raccoon.node",
     version=VERSION,
-    url="https://gitlab.com/arstecnica/raccoon.rocky.node",
+    url="https://gitlab.com/metapensiero/metapensiero.raccoon.node",
 
     description="A base object for publishing WAMP resources",
     long_description=README + '\n\n' + CHANGES,
 
     author="Alberto Berti",
-    author_email="alberto@arstecnica.it",
+    author_email="alberto@metapensiero.it",
 
     license="GPLv3+",
     classifiers=[
@@ -43,7 +43,7 @@ setup(
 
     packages=find_packages('src'),
     package_dir={'': 'src'},
-    namespace_packages=['raccoon', 'raccoon.rocky'],
+    namespace_packages=['metapensiero', 'metapensiero.raccoon'],
 
     install_requires=[
         'setuptools',
@@ -62,6 +62,6 @@ setup(
     },
     setup_requires=['pytest-runner'],
     tests_require=[
-        'raccoon.rocky.node[test]'
+        'metapensiero.raccoon.node[test]'
     ],
 )

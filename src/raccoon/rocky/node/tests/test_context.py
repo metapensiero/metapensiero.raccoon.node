@@ -7,7 +7,7 @@
 #
 
 import pytest
-from raccoon.rocky.node import NodeContext, Registry
+from metapensiero.raccoon.node import NodeContext, Registry
 
 
 def test_attribute_accessing():
@@ -17,6 +17,7 @@ def test_attribute_accessing():
     assert nc.path_resolvers == [1, 2]
     assert nc.loop == 4
     assert isinstance(nc.registry, Registry)
+
 
 def test_standard_sub_instance():
 
