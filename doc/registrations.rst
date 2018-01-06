@@ -10,5 +10,5 @@
  Registrations
 ===============
 
-.. automodule:: raccoon.rocky.node.registrations
+.. automodule:: metapensiero.raccoon.node.registrations
    :members:

@@ -14,7 +14,7 @@ undefined = object()
 
 class NodeContext:
     """
-    The run context of a tree of :class:`~raccoon.rocky.node.node.Node`
+    The run context of a tree of :class:`~metapensiero.raccoon.node.node.Node`
     instances.
     """
 
@@ -91,7 +91,7 @@ class NodeContext:
 
 class WAMPNodeContext(NodeContext):
     """
-    A :class:`~raccoon.rocky.node.node.Node` context with WAMP management
+    A :class:`~metapensiero.raccoon.node.node.Node` context with WAMP management
     details.
     """
 

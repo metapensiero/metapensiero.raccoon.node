@@ -12,8 +12,8 @@ from unittest import mock
 
 import pytest
 
-from raccoon.rocky.node import context
-from raccoon.rocky.node.wamp import node_wamp_manager
+from metapensiero.raccoon.node import context
+from metapensiero.raccoon.node.wamp import node_wamp_manager
 
 
 class FakeCallDetails:

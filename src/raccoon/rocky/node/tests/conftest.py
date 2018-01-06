@@ -6,4 +6,4 @@
 # :Copyright: © 2016, 2017, 2018 Alberto Berti
 #
 
-from raccoon.rocky.node.testing import *
+from metapensiero.raccoon.node.testing import *

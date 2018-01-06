@@ -10,5 +10,5 @@
  Proxy
 =======
 
-.. automodule:: raccoon.rocky.node.proxy
+.. automodule:: metapensiero.raccoon.node.proxy
    :members:

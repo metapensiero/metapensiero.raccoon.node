@@ -10,5 +10,5 @@
  Wamp
 ======
 
-.. automodule:: raccoon.rocky.node.wamp
+.. automodule:: metapensiero.raccoon.node.wamp
    :members:

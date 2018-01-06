@@ -13,9 +13,9 @@ import pytest
 
 from metapensiero.signal import Signal, handler
 
-from raccoon.rocky.node.path import Path
-from raccoon.rocky.node.node import Node, WAMPNode
-from raccoon.rocky.node.wamp import call
+from metapensiero.raccoon.node.path import Path
+from metapensiero.raccoon.node.node import Node, WAMPNode
+from metapensiero.raccoon.node.wamp import call
 
 
 @pytest.mark.asyncio

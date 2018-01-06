@@ -7,7 +7,7 @@
 #
 
 import pytest
-from raccoon.rocky.node.context import WAMPNodeContext
+from metapensiero.raccoon.node.context import WAMPNodeContext
 
 
 def test_standard_instance():
