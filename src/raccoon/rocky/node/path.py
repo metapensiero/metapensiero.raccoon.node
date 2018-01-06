@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- path resolution utility
+# :Project:   metapensiero.raccoon.node -- path resolution utility
 # :Created:   mar 16 feb 2016 19:46:39 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
+# :Copyright: © 2016, 2017, 2018 Alberto Berti
 #
 
 from collections import abc

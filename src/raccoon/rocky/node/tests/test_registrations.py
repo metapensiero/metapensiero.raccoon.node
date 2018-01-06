@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- node tests
+# :Project:   metapensiero.raccoon.node -- node tests
 # :Created:   lun 12 dic 2016 11:13:43 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: © 2016, 2017, 2018 Alberto Berti
 #
 
 import pytest
 
-from raccoon.rocky.node.registrations import RPCPoint
+from metapensiero.raccoon.node.registrations import RPCPoint
 
 
 class FakeContext:

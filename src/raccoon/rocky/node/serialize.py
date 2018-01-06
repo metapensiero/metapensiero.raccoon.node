@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- node serialization
+# :Project:   metapensiero.raccoon.node -- node serialization
 # :Created:   dom 04 giu 2017 13:09:20 CEST
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: © 2017 Arstecnica s.r.l.
+# :Copyright: © 2017, 2018 Alberto Berti
 #
 
 import abc

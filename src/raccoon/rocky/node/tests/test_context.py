@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- context class tests
+# :Project:   metapensiero.raccoon.node -- context class tests
 # :Created:   mar 16 feb 2016 18:33:36 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016 Arstecnica s.r.l.
+# :Copyright: © 2016, 2017, 2018 Alberto Berti
 #
 
 import pytest

@@ -1,9 +1,9 @@
 .. -*- coding: utf-8 -*-
-.. :Project:   raccoon.rocky.node -- proxy documentation
+.. :Project:   metapensiero.raccoon.node -- proxy documentation
 .. :Created:   dom 15 gen 2017 17:17:36 CET
 .. :Author:    Lele Gaifax <lele@metapensiero.it>
-.. :License:   No License
-.. :Copyright: © 2017 Arstecnica s.r.l.
+.. :License:   GNU General Public License version 3 or later
+.. :Copyright: © 2017, 2018 Lele Gaifax
 ..
 
 =======

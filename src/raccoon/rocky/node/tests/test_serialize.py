@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- node tests
+# :Project:   metapensiero.raccoon.node -- node tests
 # :Created:   mar 06 giu 2017 19:39:00 CEST
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: © 2017 Arstecnica s.r.l.
+# :Copyright: © 2017, 2018 Alberto Berti
 #
 
 import pytest

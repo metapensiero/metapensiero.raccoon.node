@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# :Project:   raccoon.rocky.node -- signal handling utilities
+# :Project:   metapensiero.raccoon.node -- signal handling utilities
 # :Created:   mar 16 feb 2016 16:17:35 CET
 # :Author:    Alberto Berti <alberto@metapensiero.it>
 # :License:   GNU General Public License version 3 or later
-# :Copyright: Copyright (C) 2016, 2017 Arstecnica s.r.l.
+# :Copyright: © 2016, 2017, 2018 Alberto Berti
 #
 
 from abc import ABCMeta, abstractmethod
