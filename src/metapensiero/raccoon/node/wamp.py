@@ -77,6 +77,12 @@ def _log(message, *args, **kw):
     logger.debug(message)
 
 
+def _gen_notify_no_ext(iproxy):
+    def notify_no_ext(*args, **kwargs):
+        return iproxy.notify_prepared(args, kwargs, notify_external=False)
+    return notify_no_ext
+
+
 class NodeWAMPManager:
     """Hooks up into ``metapensiero.signal`` machinery and registers itself
     to handle :term:`WAMP` setup.
@@ -269,7 +275,7 @@ class NodeWAMPManager:
                     iproxy = sig.__get__(node, type(node))
                     iproxies.append(iproxy)
                     sig_endpoints.append(('.'.join(p),
-                                          iproxy.notify_no_ext, True))
+                                          _gen_notify_no_ext(iproxy), True))
 
                 points = await self.reg_store.add_subscription(node, context,
                                                                *sig_endpoints)
