@@ -266,7 +266,7 @@ class NodeWAMPManager:
                         p = path.path
                     else:
                         p = path.path + (name,)
-                    iproxy = sig.__get__(node)
+                    iproxy = sig.__get__(node, type(node))
                     iproxies.append(iproxy)
                     sig_endpoints.append(('.'.join(p),
                                           iproxy.notify_no_ext, True))
@@ -512,7 +512,7 @@ class NodeWAMPManager:
         # during WAMP publication
         ext_kwargs = {k: v for k, v in kwargs.items()
                       if not k.startswith('local_')}
-        src_point = signal.__get__(instance).wamp_point
+        src_point = signal.__get__(instance, type(instance)).wamp_point
         return self.notify(src_point, wamp_topic, *args, **ext_kwargs)
 
     def register_class(self, cls, bases, namespace, signals, handlers):
