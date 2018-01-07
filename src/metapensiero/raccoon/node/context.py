@@ -36,8 +36,9 @@ class NodeContext:
                 break
             ctx = ctx._parent_context
         else:
-            raise AttributeError(("This {type(self).__name__} has no "
-                                  "attribute {name!r}").format(name=name))
+            raise AttributeError(
+                ("This {self_cname} has no attribute {name!r}").format(
+                    name=name, self_cname=type(self).__name__))
         return value
 
     def __getitem__(self, item):
