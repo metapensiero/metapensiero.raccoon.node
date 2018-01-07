@@ -9,7 +9,7 @@
 import asyncio
 import logging
 
-from metapensiero.signal import (Signal, SignalAndHandlerInitMeta)
+from metapensiero.signal import (Signal, SignalAndHandlerInitMeta, signal)
 
 from .context import NodeContext
 from .path import Path
@@ -30,28 +30,46 @@ class NodeError(Exception):
 class Node(metaclass=SignalAndHandlerInitMeta):
     """The node is the base building block of Rocky.
     """
-    on_node_add = Signal(sequential_async_handlers=True)
-    "Signal emitted when a node is added by setting an attribute to it."
 
-    on_node_bind = Signal(sequential_async_handlers=True)
-    """Signal emitted at the end of :meth:`node_bind` call. Every callback
-    will receive the following parameters:
+    @signal
+    def on_node_add(self, path, node):
+        """Signal emitted when a node is added by setting an attribute to it.
+        Every callback will receive the following parameters:
 
-    node : :class:`Node`
-      the bound node
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param node: the bound child node
+        :type node: :class:`Node`
+        """
 
-    path : :class:`~.path.Path`
-      the path where the node is bound, available also as ``node.node_path``
+    @signal
+    def on_node_bind(self, node, path, parent):
+        """Signal emitted at the end of :meth:`node_bind` call. Every callback
+        will receive the following parameters:
 
-    parent : :class:`Node`
-      the parent node
-    """
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        """
 
-    on_node_unbind = Signal(sequential_async_handlers=True,
-                            sort_mode=Signal.SORT_MODE.TOPDOWN)
-    """Signal emitted at the end of :meth:`node_unbind` call. Every callback
-    will receive the same parameters as the `on_node_bind` signal.
-    """
+    @signal(Signal.FLAGS.SORT_TOPDOWN)
+    def on_node_unbind(self, node, path, parent):
+        """Signal emitted at the end of :meth:`node_unbind` call. Every
+        callback will receive the following parameters:
+
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        """
 
     node_context = None
     """An instance of the :class:`~.context.NodeContext` class that supplies
@@ -135,11 +153,11 @@ class Node(metaclass=SignalAndHandlerInitMeta):
                                          parent=self.node_parent)
         await self._node_unbind()
 
-
     @property
     def loop(self):
         """Returns the asyncio loop for this node."""
-        return self.node_context.loop if self.node_context is not None else None
+        return (self.node_context.loop if self.node_context is not None
+                else None)
 
     async def node_add(self, name, value):
         if not isinstance(value, Node):
@@ -259,6 +277,23 @@ class WAMPNode(Node, serialize.Serializable, metaclass=WAMPInitMeta):
     """It's ``True`` if this mode's :meth:`node_register` has been called and
     that this node has successfully completed the registration process.
     """
+
+    @signal
+    def on_node_register(self, node, path, context, parent, points):
+        """Signal emitted when the node's resources are registered.
+
+        :param node: the bound node
+        :type node: :class:`Node`
+        :param path: the path where the node is bound, available also as
+          `node.node_path`
+        :type path: :class:`~.path.Path`
+        :param context: the node_context of the node
+        :type context: :class:`~.context.NodeContext`
+        :param parent: this node's parent, if any
+        :type parent: :class:`Node`
+        :param points: a set containing the rpc points created by the
+          registration
+        """
 
     on_node_register = Signal()
     """Signal emitted when :meth:`node_register` is called. Its events have
